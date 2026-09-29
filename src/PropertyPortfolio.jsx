@@ -1,0 +1,7 @@
+import React from 'react';
+import {getTiles} from './board.js';
+import {holdings,propertyValue,money,rent,canRedeem,getIndustryQuote} from './game.js';
+export function PropertyPortfolio({game,id,animating,dispatch,onIndustry}){
+ const tiles=getTiles(game),items=holdings(game,id);
+ return <div className="wallet-properties">{items.length?items.map(i=>{const p=game.properties[i],bank=p.owner==='bank',industry=tiles[i].type==='industry';return <div key={i} className={`portfolio-row ${bank?'bank-held':''} ${industry?'portfolio-industry':''}`} data-asset-kind={industry?'industry':'city'}><img src={tiles[i].asset} alt=""/><span><b>{tiles[i].name}</b><small>{industry?'公共事业':`${p.level+1} 级城市`} · {bank?'银行代持':industry?'在营':'持有'}</small></span><span><b>{money(propertyValue(game,i)-(bank?p.mortgageAmount:0))}</b><small>{bank?`抵押款 ${money(p.mortgageAmount)}`:industry?`服务费预览 ${money(getIndustryQuote(game,i,game.current,id).amount)}`:`租金 ${money(rent(game,i))}`}</small></span>{industry&&onIndustry&&<button className="industry-detail-link" onClick={()=>onIndustry(i)} aria-label={`查看${tiles[i].name}计价`}>计价详情</button>}{bank&&id===0&&<button className="redeem-button" disabled={animating||!canRedeem(game,i,0)} onClick={()=>dispatch({type:'REDEEM',tile:i})}>赎回 {money(p.mortgageAmount)}</button>}</div>}):<p>暂无产权。</p>}{items.some(i=>tiles[i].type==='industry')&&<p className="portfolio-note">产业服务费随骰点、轮次、来客地产和业主联动变化。预览采用当前行动者和骰点。</p>}{items.some(i=>game.properties[i].owner==='bank')&&<p className="portfolio-note">抵押款原额赎回。自己的掷骰前或回合结束时可操作。</p>}</div>;
+}

@@ -1,0 +1,29 @@
+// Original classic-city geometry, keyed by the city-library ID.
+const R=(x,y,w,h,c)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`;
+const P=(p,c)=>`<polygon points="${p}" fill="${c}"/>`;
+const G=(x,y,s)=>`<g transform="translate(${x} ${y})">${s}</g>`;
+const wrap=(s,w=96,h=80)=>`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}" shape-rendering="crispEdges">${s}</svg>`;
+const C={ink:'#4b5547',cream:'#f7e4b4',gold:'#d2a14f',roof:'#54857a',red:'#b45f4f',water:'#88c8c1'};
+function tree(x,y,c='#709b68'){return G(x,y,R(7,15,3,12,'#887657')+R(3,5,12,13,c)+R(0,9,18,8,c)+R(6,2,6,5,c)+R(4,7,5,6,'#a3bb7e')+R(4,26,12,2,'#8ea68a'));}
+function roof(x,y,w,c=C.roof){return R(x-3,y,w+6,3,'#4a6860')+R(x,y-3,w,3,c)+R(x+4,y-6,w-8,3,c)+R(x+8,y-8,w-16,2,c)+R(x-3,y-2,3,2,c)+R(x+w,y-2,3,2,c)+R(x+5,y-4,w-10,1,'#d7bb73');}
+function windows(x,y,w,h,c='#ffe1a0'){let s='';for(let yy=y;yy<y+h;yy+=6)for(let xx=x;xx<x+w;xx+=6)s+=R(xx,yy,2,3,c);return s;}
+function tower(x,y,w,h,c){return R(x,y,w,h,c)+R(x+w,y+4,4,h-4,'#607f80')+R(x,y,w,2,'#d6dcbd')+windows(x+3,y+5,w-5,h-6);}
+function house(x,y,w=20,c=C.red){return R(x,y,w,18,C.cream)+R(x+w,y+2,4,16,'#cbb994')+roof(x-1,y,w+2,c)+R(x+3,y+5,4,5,'#799b97')+R(x+w-6,y+5,3,5,'#799b97')+R(x+w/2-2,y+10,5,8,'#866f55');}
+function base(water=false){let s=P('5,62 69,57 94,64 76,75 13,76 1,70','#b6c79e')+P('1,70 13,76 76,75 94,64 94,69 77,80 12,80 1,75','#81977b')+P('7,64 71,60 88,65 73,71 16,72','#cbd5ae');if(water){s+=P('3,66 47,62 93,67 74,75 11,74',C.water);for(let i=0;i<7;i++)s+=R(8+i*11,68+i%2*4,6,1,'#c4e5cd');}return s;}
+function person(x,y,c='#dc9b65'){return G(x,y,R(1,0,3,3,'#584e43')+R(1,2,3,3,'#f0cc9a')+R(0,5,5,5,c)+R(0,10,2,3,'#526357')+R(3,10,2,3,'#526357'));}
+function lantern(x,y){return R(x,y,1,6,'#71664a')+R(x-2,y+5,5,6,'#d18459')+R(x,y+11,1,3,'#e1b765');}
+function pagoda(x,y,levels,c=C.roof){let s=R(x+13,y-9,2,10,C.gold);for(let i=0;i<levels;i++){const w=18+i*6,xx=x+14-w/2,yy=y+i*12;s+=R(xx,yy,w,11,'#dbb27b')+R(xx+w-3,yy,3,11,'#ad8661')+R(x+12,yy+4,4,6,'#735b4c')+roof(xx-3,yy,w+6,c);}return s;}
+const cities={};
+cities['beijing']=base()+tree(0,39)+tree(75,36)+R(16,62,62,6,'#c5b68b')+R(21,32,54,30,C.red)+R(17,55,62,5,'#dcba7f')+roof(17,32,62,C.gold)+R(29,20,38,10,'#bc6d4b')+roof(26,20,44,'#d6ac58')+R(41,43,14,19,'#5f5144')+R(44,46,8,16,'#8b5347')+windows(27,38,11,14)+windows(59,38,11,14)+R(37,60,24,4,'#dfd1a7')+R(33,64,32,3,'#e8dbb6')+lantern(21,33)+lantern(73,33)+person(20,62);
+cities['xian']=base()+R(8,54,75,14,'#969c85')+R(8,50,7,6,'#b4b298')+R(23,50,7,6,'#b4b298')+R(69,50,7,6,'#b4b298')+pagoda(32,13,4,'#a98b61')+R(35,59,15,12,'#526d5d')+tree(2,36)+person(69,60,'#b98dba');
+cities['chengdu']=base()+house(51,39,27,'#678675')+tree(4,33)+G(20,33,R(2,0,8,8,'#354c42')+R(23,0,8,8,'#354c42')+R(4,6,25,20,'#f9eed4')+R(5,13,8,8,'#43594d')+R(20,13,8,8,'#43594d')+R(8,14,2,2,'#fff')+R(21,14,2,2,'#fff')+R(14,22,5,3,'#43594d')+R(5,26,23,12,'#f6ecd1')+R(1,26,7,11,'#43594d')+R(25,26,7,11,'#43594d')+R(5,35,7,5,'#43594d')+R(21,35,7,5,'#43594d'))+R(82,25,3,42,'#638d65')+R(76,34,14,3,'#638d65')+R(80,45,13,3,'#739b6c')+person(63,60,'#d99560');
+cities['chongqing']=base(true)+tower(49,10,13,39,'#8aa49a')+tower(69,19,12,36,'#75938d')+house(14,40,25,'#ae7657')+house(30,29,24,'#bc8958')+house(47,44,24,'#c88550')+R(6,57,82,4,'#716f5b')+R(14,59,4,10,'#716f5b')+R(73,59,4,10,'#716f5b')+R(61,45,26,9,'#c46c50')+R(64,47,20,4,'#ede4b7')+R(65,54,3,2,C.ink)+R(80,54,3,2,C.ink)+lantern(24,42);
+cities['wuhan']=base(true)+R(14,61,64,6,'#aaa67a')+pagoda(31,15,4,'#c4a45e')+tree(3,39)+tree(72,40)+R(20,70,54,2,'#d7dfb9')+P('68,25 72,21 75,24 80,21 76,26','#f6edca')+person(66,56);
+cities['nanjing']=base()+tree(0,25,'#b6ae64')+tree(73,26,'#9baf6a')+R(14,41,68,28,'#849888')+R(17,37,10,7,'#9bae95')+R(34,37,10,7,'#9bae95')+R(51,37,10,7,'#9bae95')+R(69,37,10,7,'#9bae95')+R(38,53,19,17,'#4b685a')+R(41,49,13,7,'#4b685a')+R(29,25,37,14,'#c4b489')+roof(25,25,45,'#4c7b70')+windows(34,29,27,5)+R(9,70,76,3,'#d4c89e')+person(21,59,'#c99b63');
+cities['hangzhou']=base(true)+tree(1,35)+pagoda(56,22,3,'#818f60')+P('8,61 20,52 31,48 45,51 55,59 55,64 44,57 32,55 23,58 11,67','#efe0b3')+R(11,59,3,9,'#efe0b3')+R(24,52,3,10,'#efe0b3')+R(41,53,3,9,'#efe0b3')+P('27,69 41,69 38,73 30,73','#ae8060')+R(34,62,1,8,'#795f4c')+P('35,61 42,67 35,67','#f3d39d');
+cities['shanghai']=base(true)+tower(53,10,12,52,'#81a5ab')+P('70,14 83,4 83,61 70,61','#5d8c94')+windows(73,21,8,36)+tower(10,39,14,25,'#c4bb91')+R(35,4,2,60,'#a47c77')+R(32,16,8,6,'#d49590')+R(28,31,16,12,'#c98282')+R(25,35,22,5,'#a97477')+R(32,33,5,4,'#f2c9a7')+P('34,43 38,43 46,65 40,65 36,51 32,65 26,65','#b69488')+R(34,1,1,10,'#a77771');
+cities['guangzhou']=base(true)+tower(12,27,15,35,'#acb49a')+tower(70,34,15,31,'#78a39b')+P('40,17 58,17 51,41 57,66 38,66 45,41','#d4b976')+R(46,4,2,14,'#a88565')+R(42,11,12,6,'#d6b875')+[22,28,34,43,49,55,61].map(y=>R(y<40?43:42,y,y<40?12:13,2,'#f1d9a0')).join('')+P('40,19 56,64 53,64 38,19','#b4916e')+tree(0,43);
+cities['shenzhen']=base()+P('43,3 48,10 56,63 30,63 39,11','#82aaa6')+P('43,3 48,10 56,63 46,63','#5b8f90')+windows(38,26,10,32)+tower(62,27,14,36,'#a1bcb0')+tower(14,34,13,30,'#adc3b0')+tree(73,39)+R(6,67,68,3,'#e6d8aa')+person(20,62,'#749cc0');
+cities['xiamen']=base(true)+house(18,41,22,'#ca7f63')+house(42,31,26,'#c68a6c')+R(51,13,7,15,'#dec897')+roof(46,17,17,'#b4745c')+R(53,20,3,4,'#688f84')+tree(72,39)+R(10,39,3,27,'#9e8e5e')+P('11,39 0,34 2,30 12,35 18,29 25,32 14,40','#6f9a70')+P('54,70 73,70 68,74 59,74','#b48764')+R(63,64,1,6,C.ink)+P('64,62 72,68 64,68','#f7e5bd');
+cities['qingdao']=base(true)+house(7,46,22,'#c78359')+house(30,39,21,'#ba7057')+house(51,45,23,'#d88e65')+R(36,15,10,24,'#e4cea0')+P('34,16 41,4 48,16','#a96956')+R(39,20,4,8,'#789384')+tree(75,34)+R(7,67,77,3,'#d9cda4')+person(69,60,'#5e9384');
+export const CLASSIC_CITY_ART = Object.freeze(Object.fromEntries(Object.entries(cities).map(([id,art])=>[id,wrap(art)])));
