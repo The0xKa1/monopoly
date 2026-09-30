@@ -76,7 +76,7 @@
  .game-view .event-lab-use{min-height:25px;padding:3px 8px;font-size:9px}
  .game-view .event-lab-changes{grid-column:2;grid-row:2;margin:0;padding:0;border:0}
  .game-view .event-lab-changes summary{min-height:25px;padding:5px 3px;font-size:10px}
- .game-view .event-lab-change-content{position:absolute;right:0;top:calc(100% + 5px);width:min(550px,calc(100vw - 64px));max-height:min(55dvh,400px);overflow:auto;overscroll-behavior:contain;padding:12px 16px;background:#fffaf0;border:1px solid #d7c08a;border-radius:6px;box-shadow:0 7px 22px #46391926;scrollbar-width:thin}
+ .game-view .event-lab-change-content{position:absolute;left:0;top:calc(100% + 5px);width:min(550px,calc(100vw - 64px));max-height:min(55dvh,400px);overflow:auto;overscroll-behavior:contain;padding:12px 16px;background:#fffaf0;border:1px solid #d7c08a;border-radius:6px;box-shadow:0 7px 22px #46391926;scrollbar-width:thin}
  .game-view>main>footer{flex-shrink:0;margin:0;border:0;min-height:21px;padding:4px 2px;font-size:8px}
  .board-viewport-controls{display:flex;align-items:center;gap:0;border:1px solid #cdd8bd;border-radius:5px;background:#f5f8eb;flex-shrink:0;overflow:hidden}
  .board-viewport-controls button{display:flex;align-items:center;justify-content:center;gap:5px;min-height:29px;padding:5px 7px;border:0;border-radius:0;background:transparent;color:#55704d;font-size:10px}
