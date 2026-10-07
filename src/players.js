@@ -25,6 +25,14 @@ export function addPlayer(state,profile){
  return {state:{...state,players:[...state.players,player]}};
 }
 // Append-only roster changes are safe while dice/movement is awaiting completion.
-// Pending economic results win, but newer appearances and newly added players survive.
-export function mergePendingPlayers(pending,latest){return [...pending.map((p,id)=>({...p,appearance:normalizeAppearance(latest[id].appearance,id)})),...latest.slice(pending.length)];}
+// Pending economic results win, but newer names, appearances and added players survive.
+export function mergePendingPlayers(pending,latest){return [...pending.map((p,id)=>({...p,name:latest[id].name,appearance:normalizeAppearance(latest[id].appearance,id)})),...latest.slice(pending.length)];}
+// Rename any seat; the name must stay unique among the other players.
+export function renamePlayer(state,id,name){
+ if(!state.players[id])return {error:'角色不存在'};
+ const trimmed=typeof name==='string'?name.trim():'';
+ if(trimmed===state.players[id].name)return {state};
+ const error=playerNameError(trimmed,state.players.filter((_,i)=>i!==id));if(error)return {error};
+ return {state:{...state,players:state.players.map((p,i)=>i===id?{...p,name:trimmed}:p)}};
+}
 export function validRosterSave(state){return state?.version===1&&Array.isArray(state.players)&&state.players.length>=4&&state.players.length<=MAX_PLAYERS&&Number.isInteger(state.current)&&state.current>=0&&state.current<state.players.length&&['roll','buy','upgrade','rent','offer','debt','draw','event','event-destination','event-choice','end','finished'].includes(state.phase);}

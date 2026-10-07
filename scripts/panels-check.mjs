@@ -16,7 +16,7 @@ try {
  assert.equal(await page.locator('.participant-picker button').count(),4);
  await page.getByRole('dialog').getByRole('button',{name:'查看小紫的资产'}).click();
  assert.equal(await page.getByRole('dialog').locator('h2').innerText(),'小紫');
- assert.match(await page.locator('.wallet-properties').innerText(),/暂无地产/);
+ assert.match(await page.locator('.wallet-properties').innerText(),/暂无(地产|产权)/);
  await page.keyboard.press('Escape');
  await page.getByRole('button',{name:'展开玩家资产',exact:true}).focus();await page.keyboard.press('Enter');
  assert.equal(await page.locator('#player-details').isVisible(),true);

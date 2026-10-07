@@ -67,6 +67,7 @@ node scripts/board-viewport-check.mjs
 ## 文件
 
 - `src/game.js`：独立规则与状态转换，无 DOM、无框架依赖；随机数由调用者提供。
+- `src/ai.js`：AI 决策（纯函数），由 game.js 转出 `aiAction`。
 - `src/board.js`：随机地图、城市 ID 组装与路径坐标，经典图保留旧存档索引。
 - `src/industries.js` / `src/IndustryDetails.jsx` / `src/industries.css`：公共事业计价、联动、详情与预览，像素画由 `scripts/draw-industries.mjs` 生成。
 - `src/BoardHub.jsx` / `src/board-hub.css`：棋盘中央状态、公告、事件、道具与回合记录。
@@ -89,6 +90,6 @@ node scripts/board-viewport-check.mjs
 
 ## 原型边界
 
-当前是本地单人浏览器版本，没有微信登录、联机服务、排行榜、支付或小程序发布包，也没有提交微信审核。AI 使用简单的现金储备策略，暂不主动使用卡牌。下一阶段可以在确认玩法后选择微信小游戏 Canvas 渲染或小程序适配方案，再接入账号、服务端权威状态和联机房间。
+当前是本地单人浏览器版本，没有微信登录、联机服务、排行榜、支付或小程序发布包，也没有提交微信审核。AI 为本地规则型策略（`src/ai.js`，不联网）：按前方租金动态留现金，看同色组买地/升级/收购，会用道具卡，按收益抵押与赎回。下一阶段可以在确认玩法后选择微信小游戏 Canvas 渲染或小程序适配方案，再接入账号、服务端权威状态和联机房间。
 
 资产来源及生成提示见 `public/assets/ASSETS.md`。标题字体 ZCOOL KuaiLe 使用 SIL Open Font License，许可证随字体提供。

@@ -101,3 +101,13 @@
  .game-view .hub-actor .activity-person .pixel-player{height:36px;width:27px}.game-view .hub-content{padding:8px}
  .game-view .board-decision>.property-actions{padding:10px 12px}
 }
+/* 稳定性：适应模式下棋盘恰好填满可用区，不需要滚动条；关掉滚动条可避免“出现滚动条 → 可用宽高变化 → 重新排版 → 滚动条消失”的反复抖动。
+   底部操作栏固定高度、提示单行省略，避免提示文字长短变化反复改变棋盘可用高度。 */
+@media(min-width:1024px){
+ .game-view .board-scroll[data-board-mode=fit]{overflow:hidden}
+ .game-view .turn-bar{height:67px;overflow:hidden}
+ .game-view .turn-message{min-width:0;flex:1}
+ .game-view .turn-message h3,.game-view .turn-message p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+}
+@media(min-width:1024px){.game-view .decision-status .turn-message h3{white-space:normal;line-height:1.35}}
+@media(min-width:1024px) and (max-height:760px){.game-view .turn-bar{height:57px}}

@@ -43,3 +43,16 @@ test('twenty-player seeded full games reach a valid settlement',()=>{
  while(s.phase!=='finished'&&count++<5000){s=transition(s,aiAction(s,random));for(const p of s.players)assert.ok(Number.isFinite(p.cash)&&p.cash>=0);}
  assert.equal(s.phase,'finished');assert.equal(worth(s,s.winner),Math.max(...s.players.map((_,i)=>worth(s,i))));}
 });
+
+test('any seat can be renamed with the same rules as new characters; pending moves keep the new name',async()=>{
+ const {renamePlayer,mergePendingPlayers}=await import('../src/players.js');
+ const s=initialState();
+ assert.equal(renamePlayer(s,1,'  橙子 ').state.players[1].name,'橙子');
+ assert.equal(renamePlayer(s,1,'阿橙').state,s,'unchanged name is a no-op');
+ assert.equal(renamePlayer(s,1,'小满').error,'昵称已存在');
+ assert.equal(renamePlayer(s,1,'').error,'请输入昵称');
+ assert.equal(renamePlayer(s,1,'一二三四五六七八九十一二三').error,'昵称最多 12 个字');
+ assert.equal(renamePlayer(s,9,'无人').error,'角色不存在');
+ const renamed=renamePlayer(s,0,'旅人').state;
+ assert.equal(mergePendingPlayers(s.players,renamed.players)[0].name,'旅人');
+});

@@ -16,6 +16,10 @@ export const SEASONS = [
  {name:'秋日古都行',desc:'古都人文的城市租金 +30%',group:'north',icon:'leaf'},
  {name:'冬日烟火气',desc:'西南烟火的城市租金 +30%',group:'west',icon:'coffee'},
 ];
+// Round limit: a positive integer, or null for unlimited. Old saves have none and keep 20.
+export const DEFAULT_ROUNDS = 20, MAX_ROUNDS = 999;
+export const roundLimit = s => s?.roundLimit === null ? Infinity : Number.isInteger(s?.roundLimit) && s.roundLimit > 0 ? s.roundLimit : DEFAULT_ROUNDS;
+const normalizeRounds = value => value === null ? null : Number.isInteger(value) && value >= 1 ? Math.min(MAX_ROUNDS, value) : DEFAULT_ROUNDS;
 export const season = s => {const season=SEASONS[Math.floor((s.round-1)/4)%4];return !s.map||s.map.kind==='classic'?season:{...season,desc:`${getGroups(s)[season.group].name}的城市租金 +30%`};};
 export const ownedAssets = (s,id) => Object.keys(s.properties).filter(k=>s.properties[k].owner===id).map(Number);
 export const owned = (s,id) => {const tiles=getTiles(s);return ownedAssets(s,id).filter(i=>tiles[i]?.type==='city');};
@@ -44,7 +48,7 @@ export function getIndustryQuote(s,index,visitor=s.current,owner=s.properties[in
  return owner==='bank'?{...quote,amount:0,basis:'银行代持，暂停收费与产业联动。',bonuses:[],links:quote.links.map(link=>({...link,active:false}))}:quote;
 }
 export const money = n => '¥ '+n.toLocaleString('en-US');
-export function initialState(roster,map=CLASSIC_MAP,eventDeck){return migrateAppearances({version:1,map:validateMap(map),...(Array.isArray(eventDeck)?{eventDeck:[...eventDeck]}:{}),round:1,current:0,phase:'roll',dice:1,lastDice:1,players:roster?roster.map(createPlayer):[
+export function initialState(roster,map=CLASSIC_MAP,eventDeck,options={}){return migrateAppearances({version:1,map:validateMap(map),...(Array.isArray(eventDeck)?{eventDeck:[...eventDeck]}:{}),roundLimit:normalizeRounds(options.roundLimit),round:1,current:0,phase:'roll',dice:1,lastDice:1,players:roster?roster.map(createPlayer):[
  {name:'小满',role:'旅行家',ability:'经过起点额外获得 ¥200',color:'#518c6c',cash:12000,pos:0,cards:{dice:2,shield:1,build:1}},
  {name:'阿橙',role:'建筑师',ability:'城市升级费用减少 20%',color:'#d79456',cash:12000,pos:0,cards:{dice:0,shield:0,build:0}},
  {name:'小紫',role:'投资人',ability:'收取城市租金增加 15%',color:'#9a81b5',cash:12000,pos:0,cards:{dice:0,shield:0,build:0}},
@@ -112,7 +116,7 @@ function bankrupt(s){
 }
 export function transition(state,action){const s=structuredClone(state);const TILES=getTiles(s);const p=s.players[s.current];if(s.phase==='finished')return state;s.transactions=[];
  switch(action.type){
- case 'CARD':{if(s.phase!=='roll'||s.current!==0||!CARDS[action.card]||!p.cards[action.card])return state;if(action.card==='shield'&&p.shield||action.card==='build'&&p.subsidy||action.card==='dice'&&p.controlled)return state;
+ case 'CARD':{if(s.phase!=='roll'||(action.actor??0)!==s.current||!CARDS[action.card]||!p.cards[action.card])return state;if(action.card==='shield'&&p.shield||action.card==='build'&&p.subsidy||action.card==='dice'&&p.controlled)return state;
  if(action.card==='dice'){if(!Number.isInteger(action.value)||action.value<1||action.value>6)return state;p.controlled=action.value;}
  if(action.card==='shield')p.shield=true;if(action.card==='build')p.subsidy=true;p.cards[action.card]--;log(s,`${p.name}使用了${CARDS[action.card].name}${action.card==='dice'?`，下一次前进 ${action.value} 步`:''}。`);break;}
  case 'ROLL':{if(s.phase!=='roll'||!Number.isInteger(action.value)||action.value<1||action.value>6)return state;const steps=p.controlled||action.value;delete p.controlled;s.dice=steps;s.lastDice=steps;const next=p.pos+steps;if(next>=TILES.length){const bonus=s.current===0?1200:1000;transfer(s,'bank',s.current,bonus,'经过起点 · 旅途补给');log(s,`${p.name}经过起点，获得 ${money(bonus)}。`);}p.pos=next%TILES.length;const tile=TILES[p.pos];s.phase='end';log(s,`${p.name}掷出 ${steps} 点，抵达${tile.name}。`);
@@ -248,33 +252,10 @@ export function transition(state,action){const s=structuredClone(state);const TI
   transfer(s,s.current,'bank',amount,`赎回${TILES[i].name}`);prop.owner=s.current;delete prop.mortgagor;delete prop.mortgageAmount;
   log(s,`${p.name}赎回${TILES[i].name}，恢复产权与${TILES[i].type==='industry'?'收费、产业联动':'收租'}。`,'event');break;
  }
- case 'END':{if(!['end','buy','upgrade'].includes(s.phase))return state;if(s.players.filter(x=>!x.bankrupt).length<=1){finish(s);break;}do{s.current=(s.current+1)%s.players.length;if(s.current===0)s.round++;}while(s.players[s.current].bankrupt);if(s.round>20){s.round=20;finish(s);}else s.phase='roll';break;}
+ case 'END':{if(!['end','buy','upgrade'].includes(s.phase))return state;if(s.players.filter(x=>!x.bankrupt).length<=1){finish(s);break;}do{s.current=(s.current+1)%s.players.length;if(s.current===0)s.round++;}while(s.players[s.current].bankrupt);const limit=roundLimit(s);if(s.round>limit){s.round=limit;finish(s);}else s.phase='roll';break;}
+ case 'SET_ROUNDS':{if(!(action.limit===null||Number.isInteger(action.limit)&&action.limit>=1&&action.limit<=MAX_ROUNDS))return state;const next=action.limit===null?null:Math.max(s.round,action.limit);if(next===(s.roundLimit===undefined?DEFAULT_ROUNDS:s.roundLimit))return state;s.roundLimit=next;log(s,next===null?'对局改为无限轮。':`对局改为 ${next} 轮。`);break;}
+ case 'SETTLE':{if(!['roll','end'].includes(s.phase)||s.current!==0)return state;log(s,`第 ${s.round} 轮提前结算。`);finish(s);break;}
  default:return state;
  }return s;}
-export function aiAction(s,random=Math.random){
- const TILES=getTiles(s),p=s.players[s.current];
- if(s.phase==='draw')return {type:'DRAW_EVENT',index:Math.min(s.eventDraw.offerIds.length-1,Math.floor(random()*s.eventDraw.offerIds.length))};
- if(s.phase==='event')return {type:'RESOLVE_EVENT',seed:random()};
- if(s.phase==='event-choice'){
-  const options=eventChoices(s);return {type:'EVENT_CHOICE',value:options[Math.min(options.length-1,Math.floor(random()*options.length))]?.value};
- }
- if(s.phase==='event-destination'){const cities=eventDestinations(s);const safe=cities.filter(i=>!s.properties[i]||s.properties[i].owner===s.current||s.properties[i].owner==='bank');const options=safe.length?safe:cities;return {type:'EVENT_DESTINATION',tile:options[Math.min(options.length-1,Math.floor(random()*options.length))]};}
- if(s.phase==='offer'){
-  const {seller,tile}=s.offer,group=TILES[tile].group,complete=TILES[tile].type==='city'&&TILES.every((t,i)=>t.type!=='city'||t.group!==group||s.properties[i]?.owner===seller);
-  return {type:'OFFER_REPLY',actor:seller,accept:s.players[seller].cash<3000||(!complete&&ownedAssets(s,seller).length<=2)};
- }
- if(s.phase==='rent')return !s.pendingRent.offerRejected&&p.cash-purchaseQuote(s,p.pos)>=1800&&random()<.35?{type:'OFFER'}:{type:'PAY_RENT'};
- if(s.phase==='debt'){
-  if(p.cash>=s.debt.amount)return {type:'SETTLE_DEBT'};
-  const available=ownedAssets(s,s.current).sort((a,b)=>mortgageValue(s,a)-mortgageValue(s,b));
-  return available.length?{type:'MORTGAGE',tile:available[0]}:{type:'BANKRUPT'};
- }
- if(s.phase==='roll'){
-  const redeem=mortgaged(s,s.current).find(i=>p.cash-s.properties[i].mortgageAmount>=2000);
-  if(redeem!==undefined)return {type:'REDEEM',tile:redeem};
-  return {type:'ROLL',value:Math.floor(random()*6)+1,eventSeed:random()};
- }
- if(s.phase==='buy'&&p.cash-TILES[p.pos].price>=900)return {type:'BUY'};
- if(s.phase==='upgrade'&&p.cash-upgradeCost(s,p.pos)>=1200)return {type:'UPGRADE'};
- return {type:'END'};
-}
+// AI decisions live in ai.js (rule-based, local only).
+export {aiAction} from './ai.js';

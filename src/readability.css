@@ -1,0 +1,124 @@
+/*
+  游玩界面可读性层：最后导入，统一提高字号下限与次要文字对比度。
+  只覆盖字号、行高、颜色与地块图片可用高度，不改变布局结构、格号或规则。
+  #root 前缀用于稳定压过各模块里的断点覆盖。调整字号优先改下面的 --fs-* 变量。
+*/
+:root{
+  --muted-ink:#66725a;      /* 次要文字，对浅底约 4.8:1 */
+  --muted-purple:#76618c;
+  /* 手机 / 窄窗口默认字号阶梯 */
+  --fs-label:11px;          /* 标签、计数、时间 */
+  --fs-body:12px;           /* 说明、公告正文 */
+  --fs-title:13px;          /* 卡片标题、标签页、人名 */
+  --fs-strong:14px;         /* 当前状态、回合提示 */
+  --fs-money:15px;          /* 现金 */
+}
+@media(min-width:1024px){:root{--fs-label:12px;--fs-body:13px;--fs-title:13px;--fs-strong:15px;--fs-money:18px}}
+@media(min-width:1024px) and (max-height:800px){:root{--fs-body:12.5px;--fs-strong:14px;--fs-money:17px}}
+@media(min-width:1600px) and (min-height:900px){:root{--fs-label:13px;--fs-body:15px;--fs-title:15px;--fs-strong:17px;--fs-money:21px}}
+
+/* ---------- 次要文字对比度 ---------- */
+#root .tile-price,#root .special-caption,#root .map-label,#root .board-legend,#root .hub-cash small,#root .hub-cash>span,
+#root .hub-status span,#root .hub-season small,#root .hub-card small,#root .hub-tabs button,#root .hub-empty,
+#root .hub-news-heading small,#root .hub-inventory-heading small,#root .hub-news article>small,#root .hub-records summary,
+#root .hub-records p,#root .hub-records p small,#root .trip-progress>span,#root .trip-progress>b,#root .local-badge,
+#root .turn-message p,#root .activity-person small,#root .roster-add small,#root footer span,#root .board-viewport-controls output,
+#root .city-events-entry>span{color:var(--muted-ink)}
+#root .hub-season p{color:#5d7046}
+#root .hub-transaction{color:#7a6538}
+#root .hub-event small{color:var(--muted-purple)}
+#root .hub-event p{color:#66567a}
+#root .hub-buffs span{color:#636e45}
+#root .special-caption{opacity:1}
+#root .tile-price{font-family:inherit;font-variant-numeric:tabular-nums;letter-spacing:0}
+
+/* ---------- 棋盘中央信息区（所有尺寸） ---------- */
+#root .hub-actor .activity-person b{font-size:var(--fs-title)}
+#root .hub-status strong{font-size:var(--fs-strong)}
+#root .hub-status span{font-size:var(--fs-label)}
+#root .hub-cash small,#root .hub-cash>span{font-size:var(--fs-label)}
+#root .hub-cash b{font-size:var(--fs-money)}
+#root .hub-tabs button{font-size:var(--fs-title)}
+#root .hub-tabs em,#root .hub-card em{font-size:var(--fs-label)}
+#root .hub-season b,#root .hub-card b,#root .hub-transaction b,#root .hub-news-heading b,#root .hub-inventory-heading b{font-size:var(--fs-title)}
+#root .hub-season small,#root .hub-card small,#root .hub-event small,#root .hub-news-heading small,#root .hub-inventory-heading small,
+#root .hub-news article>small,#root .hub-records p small{font-size:var(--fs-label)}
+#root .hub-season p,#root .hub-event p,#root .hub-transaction p,#root .hub-news article>p,#root .hub-records p,#root .hub-empty{font-size:var(--fs-body);line-height:1.6}
+#root .hub-transaction strong{font-size:var(--fs-strong)}
+#root .hub-buffs span,#root .hub-records summary{font-size:var(--fs-label)}
+
+/* ---------- 顶部进度、玩家栏、地图工具栏、底部操作栏 ---------- */
+#root .local-badge,#root .trip-progress>span,#root .trip-progress>b{font-size:var(--fs-label)}
+#root .roster-person>span,#root .roster-edit,#root .roster-add,#root .roster-bar .fold-toggle{font-size:var(--fs-title)}
+#root .roster-add small{font-size:var(--fs-label)}
+#root .map-label,#root .board-legend{font-size:var(--fs-label)}
+#root .board-tools>.map-settings,#root .board-tools>.city-events-entry,#root .board-tools>.event-lab-entry{font-size:var(--fs-label)}
+#root .city-events-entry>span{font-size:var(--fs-label)}
+#root .board-viewport-controls button,#root .board-viewport-controls output{font-size:var(--fs-label)}
+#root .turn-message h3{font-size:var(--fs-strong)}
+#root .turn-message p{font-size:var(--fs-label)}
+#root .roll-button{font-size:15px}
+@media(min-width:1024px){#root footer span{font-size:11px}}
+
+/* ---------- 电脑地块：文字随格子高度放大，图片让出对应空间 ---------- */
+@media(min-width:1024px){
+  #root .game-view .board .tile{--tile-name:clamp(12px,calc(var(--cell-height) * .125),18px);--tile-sub:clamp(11px,calc(var(--cell-height) * .1),15px)}
+  #root .game-view .board .tile>b{font-size:var(--tile-name);line-height:1.3;letter-spacing:.5px}
+  #root .game-view .tile-price,#root .game-view .tile.industry .tile-price{font-size:var(--tile-sub);line-height:1.25;margin-top:1px}
+  #root .game-view .special-caption{font-size:calc(var(--tile-sub) - 1px);line-height:1.25;margin-top:1px}
+  #root .game-view .board .tile .city-sprite,#root .game-view .board .tile .station-sprite,#root .game-view .board .tile .industry-sprite{
+    height:max(14px,calc(var(--cell-height) - var(--tile-name) * 1.3 - var(--tile-sub) * 1.25 - 14px));
+    max-height:calc(var(--cell-height) - var(--tile-name) * 1.3 - var(--tile-sub) * 1.25 - 8px)}
+  #root .game-view .token-name{font-size:clamp(10px,calc(var(--cell-height) * .1),13px);padding:2px 6px}
+}
+
+/* ---------- 手机地块：格子约 45×70px，保持单行并让图片略缩 ---------- */
+@media(max-width:640px){
+  #root .board .tile b{font-size:10.5px;line-height:1.25;letter-spacing:-.4px;white-space:nowrap}
+  #root .board .tile.start b,#root .board .tile.city-event b{font-size:9.5px;letter-spacing:-.6px}
+  #root .tile-price,#root .tile.industry .tile-price{font-size:9px;line-height:1.2;margin-top:1px;white-space:nowrap;letter-spacing:-.3px;word-spacing:-2px;max-width:100%;overflow:hidden;text-overflow:clip}
+  #root .special-caption{font-size:7.5px;line-height:1.2;margin-top:1px;white-space:nowrap;letter-spacing:-.3px;word-spacing:-2px;max-width:100%;overflow:hidden}
+  #root .board .tile .city-sprite,#root .board .tile .station-sprite,#root .board .tile .industry-sprite{height:calc(var(--cell-height) - 40px)}
+  #root .token-name,#root .board-token .token-name{font-size:9px;padding:1px 4px}
+}
+
+/* ---------- 弹窗：地块详情、玩家资产、产业详情、收购/抵押 ---------- */
+#root .eyebrow,#root .detail-stats small,#root .modal .detail-note,#root .industry-detail-heading span,#root .industry-detail-stats small,
+#root .industry-detail-note,#root .industry-detail-link,#root .wallet-properties small,#root .portfolio-note,#root .mortgage-list small,
+#root .property-actions>small,#root .debt-actions .mortgage-rule{font-size:var(--fs-label)}
+#root .modal>p,#root .industry-detail-heading p,#root .property-actions p,#root .wallet-properties b,#root .portfolio-row>span b,
+#root .mortgage-list b,#root .mortgage-list strong{font-size:var(--fs-body)}
+#root .property-actions h3{font-size:var(--fs-title)}
+#root .detail-stats small,#root .modal .detail-note,#root .industry-detail-note,#root .industry-detail-stats small,#root .portfolio-note,
+#root .wallet-properties small,#root .mortgage-list small,#root .property-actions>small{color:var(--muted-ink)}
+
+/* ---------- 事件卡：抽卡、揭示、选项 ---------- */
+#root .event-edition,#root .city-event-cards .event-edition,#root .event-card-category,#root .event-card-rule>span,
+#root .event-panel-heading p,#root .event-choice-list small{font-size:var(--fs-label)}
+#root .event-card-story,#root .event-card-rule,#root .event-choice-area>p{font-size:var(--fs-body);line-height:1.65}
+#root .event-choice-list b{font-size:var(--fs-title)}
+
+/* ---------- 事件卡测试栏与“实际变化” ---------- */
+#root .event-lab-bar-title p,#root .event-lab-bar-title h3 span,#root .event-lab-bar-actions button,#root .event-lab-use,
+#root .event-lab-changes summary,#root .event-lab-account-note,#root .event-lab-cash-list caption,#root .event-lab-cash-list thead,
+#root .event-lab-cash-list th,#root .event-lab-property-list caption,#root .event-lab-property-list thead,#root .event-lab-shield-list small,
+#root .event-lab-result span,#root .event-lab-card-category,#root .event-lab-controls>span,#root .event-lab-filters button{font-size:var(--fs-label)}
+#root .event-lab-step p,#root .event-lab-cash-list table,#root .event-lab-cash-list td,#root .event-lab-cash-list tbody td,#root .event-lab-result,
+#root .event-lab-effect,#root .event-lab-property-list table,#root .event-lab-shield-list h4,#root .event-lab-shield-list li,
+#root .event-lab-card-rule,#root .event-lab-card-start,#root .event-lab-controls label,#root .event-lab-pools button{font-size:var(--fs-body)}
+#root .event-draw-caption{font-size:var(--fs-label)}
+#root .event-lab-bar-title h3{font-size:var(--fs-title)}
+
+/* 人物站在地块图片上、昵称放在头顶，不再压住地块下方的城市名和价格 */
+#root .board-token .token-name{top:-3px;bottom:auto;transform:translate(-50%,-100%)}
+#root .board-token .token-shadow{bottom:8px}
+#root .board-token,#root .board-token:not(:disabled):active{transform:translate(calc(-50% + var(--slot)),-64%)}
+@media(min-width:1024px){
+  #root .game-view .board-token{--token-height:clamp(24px,calc(var(--cell-height) * .56),58px)}
+  #root .game-view .board-token,#root .game-view .board-token:not(:disabled):active{transform:translate(calc(-50% + var(--slot)),-68%)}
+}
+@media(max-width:640px){
+  #root .board-token,#root .board-token:not(:disabled):active{transform:translate(calc(-50% + var(--slot) * .6),-64%)}
+  #root .board-token{height:40px}
+  #root .token-body .pixel-player{width:27px;height:36px}
+}

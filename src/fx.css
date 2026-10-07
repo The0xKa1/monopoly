@@ -1,0 +1,163 @@
+/* 游玩特效层：只做表现，pointer-events 全部关闭，不影响点击与布局。 */
+.fx-layer{position:fixed;inset:0;z-index:15;pointer-events:none;overflow:hidden;contain:strict}
+.fx-layer *{pointer-events:none}
+.fx-tile{position:fixed;overflow:visible}
+.fx-tile>*{position:absolute}
+
+/* ---------- 共用：光环、彩带、金币 ---------- */
+.fx-ring{left:50%;top:50%;width:100%;aspect-ratio:1;max-width:160px;border:3px solid var(--owner,#d2ab57);border-radius:50%;transform:translate(-50%,-50%) scale(.3);opacity:0;animation:fx-ring .8s cubic-bezier(.15,.7,.3,1) forwards}
+.fx-ring-late{animation-delay:.18s;border-width:2px}
+.fx-ring-gold{--owner:#e8b94a}
+@keyframes fx-ring{0%{opacity:.95;transform:translate(-50%,-50%) scale(.3)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.9)}}
+.fx-confetti,.fx-coin{left:50%;top:45%;width:calc(8px * var(--s));height:calc(13px * var(--s));margin:-5px 0 0 -3px;background:var(--c);box-shadow:inset -2px -2px 0 #0000002a;opacity:0;animation:fx-pop 1.05s cubic-bezier(.2,.8,.4,1) var(--delay) forwards}
+.fx-coin{width:calc(12px * var(--s));height:calc(12px * var(--s));border-radius:2px;background:radial-gradient(circle at 35% 35%,#fff3b8 0 22%,var(--c) 24% 70%,#b9822b 72%);box-shadow:0 0 0 1px #9b6a1f}
+@keyframes fx-pop{
+ 0%{opacity:1;transform:translate(0,0) rotate(0) scale(.4)}
+ 45%{opacity:1;transform:translate(var(--dx),var(--dy)) rotate(calc(var(--rot) * .5)) scale(1)}
+ 100%{opacity:0;transform:translate(calc(var(--dx) * 1.15),calc(var(--dy) + var(--fall))) rotate(var(--rot)) scale(.8)}}
+
+/* ---------- 购买 / 收购：盖章 + 彩带 ---------- */
+.fx-flash{inset:0;border-radius:4px;background:var(--owner);opacity:0;animation:fx-flash .7s ease-out .12s}
+@keyframes fx-flash{0%{opacity:.55}100%{opacity:0}}
+.fx-stamp{left:50%;top:44%;display:flex;flex-direction:column;align-items:center;gap:1px;padding:5px 10px 4px;background:#fffdf0;border:3px solid var(--owner);color:var(--owner);box-shadow:3px 3px 0 #3d4a3a33;font-family:'ZCOOL KuaiLe',sans-serif;white-space:nowrap;opacity:0;transform:translate(-50%,-50%) rotate(-10deg) scale(2.6);animation:fx-stamp 1.3s cubic-bezier(.3,1.5,.5,1) forwards}
+.fx-stamp b{font-size:clamp(15px,2.2vw,24px);font-weight:400;letter-spacing:2px;line-height:1}
+.fx-stamp small{font:600 11px/1.2 inherit;font-family:inherit;color:#5d6a52}
+@keyframes fx-stamp{0%{opacity:0;transform:translate(-50%,-50%) rotate(-10deg) scale(2.6)}16%{opacity:1;transform:translate(-50%,-50%) rotate(-10deg) scale(.92)}26%{transform:translate(-50%,-50%) rotate(-10deg) scale(1.04)}75%{opacity:1;transform:translate(-50%,-50%) rotate(-10deg) scale(1)}100%{opacity:0;transform:translate(-50%,-62%) rotate(-10deg) scale(1)}}
+
+/* ---------- 升级：金色光柱 + 星光 + 等级 ---------- */
+.fx-beam{left:8%;right:8%;bottom:6%;height:230%;transform-origin:bottom;background:linear-gradient(to top,#ffe7a0f0,#ffd86a88 40%,#fff6d000);clip-path:polygon(18% 100%,82% 100%,100% 0,0 0);mix-blend-mode:screen;opacity:0;animation:fx-beam 1.25s ease-out forwards}
+@keyframes fx-beam{0%{opacity:0;transform:scaleY(0)}25%{opacity:1;transform:scaleY(1)}100%{opacity:0;transform:scaleY(1.05)}}
+.fx-spark{bottom:20%;width:calc(10px * var(--s));height:calc(10px * var(--s));background:#ffe48a;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);opacity:0;animation:fx-spark 1.1s ease-out var(--delay) forwards}
+@keyframes fx-spark{0%{opacity:0;transform:translateY(0) scale(.3) rotate(0)}25%{opacity:1}100%{opacity:0;transform:translateY(calc(-120px * var(--rise))) scale(1) rotate(180deg)}}
+.fx-level{left:50%;top:-6px;display:flex;flex-direction:column;align-items:center;gap:4px;padding:5px 10px;background:#3c775b;border:2px solid #fffdf0;outline:2px solid #3c775b;color:#fffdf0;box-shadow:0 4px 0 #2a5640;white-space:nowrap;opacity:0;transform:translate(-50%,0) scale(.4);animation:fx-level 1.5s cubic-bezier(.3,1.6,.5,1) .25s forwards}
+.fx-level b{font:400 clamp(14px,1.8vw,20px)/1 'ZCOOL KuaiLe',sans-serif;letter-spacing:1px}
+.fx-level em{display:flex;gap:3px}
+.fx-level em i{width:9px;height:9px;background:#ffffff40;border:1px solid #fffdf0aa}
+.fx-level em i.on{background:#ffd86a;border-color:#fffdf0;animation:fx-pip .25s cubic-bezier(.3,1.8,.5,1) calc(.45s + var(--n) * .08s) both}
+@keyframes fx-pip{0%{transform:scale(0)}100%{transform:scale(1)}}
+@keyframes fx-level{0%{opacity:0;transform:translate(-50%,10px) scale(.4)}20%{opacity:1;transform:translate(-50%,-34px) scale(1)}80%{opacity:1;transform:translate(-50%,-40px) scale(1)}100%{opacity:0;transform:translate(-50%,-56px) scale(.9)}}
+
+/* ---------- 收租：金币爆发 + 金额 ---------- */
+.fx-amount{left:50%;top:10%;display:flex;flex-direction:column;align-items:center;white-space:nowrap;opacity:0;transform:translate(-50%,0);animation:fx-amount 1.2s ease-out forwards}
+.fx-amount b{font:700 clamp(16px,2vw,22px)/1.1 monospace;color:#c4553f;text-shadow:2px 2px 0 #fffdf0,-2px -2px 0 #fffdf0,2px -2px 0 #fffdf0,-2px 2px 0 #fffdf0}
+.fx-amount small{font-size:11px;color:#5e5136;background:#fff8e0e8;padding:1px 6px;border:1px solid #e8d49a;margin-bottom:3px}
+.fx-rent.big .fx-amount b{font-size:clamp(20px,2.8vw,30px);color:#b23a2a}
+@keyframes fx-amount{0%{opacity:0;transform:translate(-50%,10px) scale(.6)}18%{opacity:1;transform:translate(-50%,-22px) scale(1.12)}30%{transform:translate(-50%,-26px) scale(1)}80%{opacity:1;transform:translate(-50%,-34px)}100%{opacity:0;transform:translate(-50%,-48px)}}
+.fx-impact{position:fixed;border-radius:10px;box-shadow:inset 0 0 0 4px #d6584466,inset 0 0 70px 18px #d6584455;opacity:0;animation:fx-impact .7s ease-out forwards}
+@keyframes fx-impact{0%{opacity:0}15%{opacity:1}100%{opacity:0}}
+
+/* ---------- 经过起点：横幅 ---------- */
+.fx-ribbon{left:50%;top:30%;padding:6px 14px;background:linear-gradient(#f6cf62,#e2a93c);border:2px solid #fffdf0;outline:2px solid #b9822b;color:#4f3a12;box-shadow:0 4px 0 #9b6a1f;white-space:nowrap;transform:translate(-50%,-50%) scaleX(0);animation:fx-ribbon 1.5s cubic-bezier(.3,1.4,.5,1) forwards}
+.fx-ribbon::before,.fx-ribbon::after{content:'';position:absolute;top:6px;width:14px;height:100%;background:#d79c37;z-index:-1}
+.fx-ribbon::before{left:-12px;clip-path:polygon(0 0,100% 0,100% 100%,0 100%,40% 50%)}
+.fx-ribbon::after{right:-12px;clip-path:polygon(0 0,100% 0,60% 50%,100% 100%,0 100%)}
+.fx-ribbon b{font:700 clamp(15px,1.9vw,21px)/1 monospace}
+@keyframes fx-ribbon{0%{transform:translate(-50%,-50%) scaleX(0)}18%{transform:translate(-50%,-90%) scaleX(1)}80%{opacity:1;transform:translate(-50%,-100%) scaleX(1)}100%{opacity:0;transform:translate(-50%,-130%) scaleX(1)}}
+
+/* ---------- 回合横幅 ---------- */
+.fx-turn{position:fixed;display:flex;align-items:center;gap:10px;padding:6px 18px 6px 8px;background:#fffdf0;border:2px solid var(--owner);border-left-width:10px;box-shadow:4px 4px 0 #3d4a3a2e;white-space:nowrap;opacity:0;transform:translate(-50%,-50%);animation:fx-turn 1.15s cubic-bezier(.2,.9,.3,1) var(--delay) forwards}
+.fx-turn-avatar{width:38px;height:44px;display:grid;place-items:center}
+.fx-turn-avatar .pixel-player{width:36px;height:44px;object-fit:contain;image-rendering:pixelated}
+.fx-turn b{font:400 clamp(17px,2vw,24px)/1 'ZCOOL KuaiLe',sans-serif;color:#33463a;letter-spacing:1px}
+.fx-turn small{font-size:12px;color:#66725a;align-self:flex-end;margin-bottom:3px}
+@keyframes fx-turn{0%{opacity:0;transform:translate(calc(-50% - 120px),-50%) skewX(-12deg)}22%{opacity:1;transform:translate(-50%,-50%) skewX(0)}78%{opacity:1;transform:translate(-50%,-50%)}100%{opacity:0;transform:translate(calc(-50% + 120px),-50%) skewX(12deg)}}
+
+/* ---------- 换季：粒子 + 卡片 + 热门区域高亮 ---------- */
+.fx-season{position:fixed;overflow:hidden;border-radius:8px}
+.fx-flake{position:absolute;top:-24px;width:calc(10px * var(--s));height:calc(10px * var(--s));opacity:0;animation:fx-fall var(--dur) linear var(--delay) forwards}
+@keyframes fx-fall{0%{opacity:0;transform:translate(0,0) rotate(0)}10%{opacity:.95}85%{opacity:.9}100%{opacity:0;transform:translate(var(--sway),calc(var(--h) + 30px)) rotate(var(--rot))}}
+.fx-season-0 .fx-flake{background:#f4a9c0;border-radius:70% 0 70% 0}
+.fx-season-1 .fx-flake{background:#ffd75e;clip-path:polygon(50% 0,62% 38%,100% 50%,62% 62%,50% 100%,38% 62%,0 50%,38% 38%);animation-name:fx-twinkle}
+.fx-season-2 .fx-flake{background:#d9773a;clip-path:polygon(50% 0,70% 30%,100% 35%,78% 60%,85% 100%,50% 80%,15% 100%,22% 60%,0 35%,30% 30%)}
+.fx-season-2 .fx-flake:nth-child(3n){background:#c9473a}
+.fx-season-3 .fx-flake{background:#fff;border-radius:2px;box-shadow:0 0 0 1px #c6d8e6}
+@keyframes fx-twinkle{0%{opacity:0;transform:translateY(calc(var(--h) * .9)) scale(.2)}40%{opacity:1;transform:translateY(calc(var(--h) * .5)) scale(1) rotate(90deg)}100%{opacity:0;transform:translate(var(--sway),calc(var(--h) * .15)) scale(.4) rotate(var(--rot))}}
+.fx-season-card{position:absolute;left:50%;top:50%;display:flex;flex-direction:column;align-items:center;gap:6px;padding:16px 28px 14px;background:#fffdf0f2;border:3px solid var(--season,#5d9c78);box-shadow:6px 6px 0 #3d4a3a33;text-align:center;opacity:0;transform:translate(-50%,-50%) scale(.6);animation:fx-season-card 3.2s cubic-bezier(.3,1.4,.5,1) .15s forwards}
+.fx-season-0{--season:#d9799a}.fx-season-1{--season:#e0a93a}.fx-season-2{--season:#c96a35}.fx-season-3{--season:#6f98b6}
+.fx-season-icon{display:grid;place-items:center;width:52px;height:52px;background:var(--season);color:#fffdf0;box-shadow:0 4px 0 #0000002a;animation:fx-icon-spin 1s steps(8) .3s}
+.fx-season-card b{font:400 clamp(22px,3vw,34px)/1.1 'ZCOOL KuaiLe',sans-serif;color:#33463a;letter-spacing:2px}
+.fx-season-card small{font-size:clamp(12px,1.2vw,15px);color:#5a6650}
+@keyframes fx-season-card{0%{opacity:0;transform:translate(-50%,-40%) scale(.6)}12%{opacity:1;transform:translate(-50%,-50%) scale(1)}82%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-58%) scale(.96)}}
+@keyframes fx-icon-spin{0%{transform:rotate(-180deg) scale(.4)}100%{transform:rotate(0) scale(1)}}
+.fx-hot{position:fixed;border-radius:5px;box-shadow:0 0 0 3px var(--season),0 0 22px 4px var(--season);opacity:0;animation:fx-hot 1s ease-in-out calc(.6s + var(--i) * .07s) 3}
+@keyframes fx-hot{0%,100%{opacity:0}50%{opacity:.9}}
+
+/* ---------- 破产：变暗、裂纹、碎屑、印章 ---------- */
+.fx-dim{position:fixed;border-radius:8px;background:#2b2f2a;opacity:0;animation:fx-dim 1.6s ease-out forwards}
+@keyframes fx-dim{0%{opacity:0}20%{opacity:.32}100%{opacity:0}}
+.fx-crumble svg{inset:0;width:100%;height:100%;fill:none;stroke:#3a3a36;stroke-width:3;vector-effect:non-scaling-stroke;stroke-dasharray:160;stroke-dashoffset:160;animation:fx-crack .45s steps(6) .3s forwards,fx-fade .5s ease-in 1.4s forwards}
+@keyframes fx-crack{to{stroke-dashoffset:0}}
+@keyframes fx-fade{to{opacity:0}}
+.fx-debris{top:55%;width:calc(7px * var(--s));height:calc(7px * var(--s));background:#8c8a7e;box-shadow:inset -2px -2px 0 #5e5c53;opacity:0;animation:fx-debris .9s cubic-bezier(.5,0,.9,.6) var(--delay) forwards}
+@keyframes fx-debris{0%{opacity:1;transform:translate(0,0)}100%{opacity:0;transform:translate(var(--dx),var(--fall)) rotate(200deg)}}
+.fx-bankrupt-stamp{position:fixed;display:flex;flex-direction:column;align-items:center;padding:6px 16px 4px;border:4px double #a8322a;color:#a8322a;background:#fff6efe8;font-family:'ZCOOL KuaiLe',sans-serif;opacity:0;transform:translate(-50%,-50%) rotate(8deg) scale(3);animation:fx-bankrupt 2s cubic-bezier(.3,1.6,.5,1) .15s forwards}
+.fx-bankrupt-stamp b{font-size:clamp(24px,3.4vw,40px);font-weight:400;letter-spacing:6px;line-height:1}
+.fx-bankrupt-stamp small{font-size:12px;color:#7c4a42;font-family:system-ui,sans-serif}
+@keyframes fx-bankrupt{0%{opacity:0;transform:translate(-50%,-50%) rotate(8deg) scale(3)}14%{opacity:1;transform:translate(-50%,-50%) rotate(8deg) scale(.9)}20%{transform:translate(-50%,-50%) rotate(8deg) scale(1.05)}26%{transform:translate(calc(-50% - 4px),-50%) rotate(6deg)}32%{transform:translate(calc(-50% + 4px),-50%) rotate(10deg)}38%,85%{opacity:1;transform:translate(-50%,-50%) rotate(8deg) scale(1)}100%{opacity:0;transform:translate(-50%,-40%) rotate(8deg)}}
+
+/* ---------- 终局：烟花 + 获胜卡 ---------- */
+.fx-fireworks{position:fixed;inset:0;width:100vw;height:100vh;image-rendering:pixelated}
+.fx-finale{position:fixed;display:flex;flex-direction:column;align-items:center;gap:6px;padding:18px 30px 14px;background:#fffdf0f5;border:3px solid #d2ab57;outline:3px solid #fffdf0;box-shadow:0 0 0 6px #d2ab57,8px 10px 0 6px #3d4a3a30;opacity:0;transform:translate(-50%,-50%) scale(.5);animation:fx-finale 2.2s cubic-bezier(.3,1.5,.5,1) .2s forwards}
+.fx-finale-crown{color:#e0a93a;filter:drop-shadow(0 3px 0 #9b6a1f);animation:fx-crown .9s ease-in-out .6s 2}
+.fx-finale-avatar{width:64px;height:74px;display:grid;place-items:center;animation:fx-hop .5s ease-in-out .5s 3}
+.fx-finale-avatar .pixel-player{width:58px;height:74px;object-fit:contain;image-rendering:pixelated}
+.fx-finale b{font:400 clamp(24px,3.4vw,38px)/1.1 'ZCOOL KuaiLe',sans-serif;color:#33463a;letter-spacing:2px}
+.fx-finale small{font:600 14px monospace;color:#66725a}
+@keyframes fx-finale{0%{opacity:0;transform:translate(-50%,-50%) scale(.5)}15%{opacity:1;transform:translate(-50%,-50%) scale(1)}85%{opacity:1;transform:translate(-50%,-50%) scale(1)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.05)}}
+@keyframes fx-crown{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-8px) rotate(-8deg)}}
+@keyframes fx-hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-10px)}}
+
+/* ---------- 结果弹窗：领奖台 ---------- */
+.podium{display:flex;align-items:flex-end;justify-content:center;gap:10px;margin:18px 0 6px;min-height:190px}
+.podium-col{display:flex;flex-direction:column;align-items:center;gap:4px;width:min(30%,120px)}
+.podium-avatar{position:relative;width:46px;height:54px;display:grid;place-items:center;opacity:0;animation:fx-drop .5s cubic-bezier(.3,1.6,.5,1) forwards}
+.podium-avatar .pixel-player{width:42px;height:54px;object-fit:contain;image-rendering:pixelated}
+.podium-crown{position:absolute;top:-24px;left:50%;transform:translateX(-50%);color:#e0a93a;filter:drop-shadow(0 2px 0 #9b6a1f);animation:fx-crown 1.2s ease-in-out 1.6s infinite}
+.podium-col>b{font-size:13px;color:#33463a;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;opacity:0;animation:fx-fade-in .3s ease-out forwards}
+.podium-step{display:flex;flex-direction:column;align-items:center;justify-content:flex-start;gap:2px;width:100%;padding-top:8px;background:linear-gradient(var(--owner),color-mix(in srgb,var(--owner) 70%,#2b2f2a));border:2px solid #fffdf0;outline:2px solid color-mix(in srgb,var(--owner) 70%,#2b2f2a);color:#fffdf0;transform-origin:bottom;transform:scaleY(0);animation:fx-rise .55s cubic-bezier(.2,1.3,.4,1) forwards}
+.podium-step strong{font:400 26px/1 'ZCOOL KuaiLe',sans-serif}
+.podium-step small{font:600 11px monospace;opacity:.95}
+.place-1 .podium-step{height:104px}.place-2 .podium-step{height:76px}.place-3 .podium-step{height:56px}
+.place-3 .podium-step{animation-delay:.1s}.place-2 .podium-step{animation-delay:.45s}.place-1 .podium-step{animation-delay:.8s}
+.place-3 .podium-avatar,.place-3>b{animation-delay:.5s}.place-2 .podium-avatar,.place-2>b{animation-delay:.85s}.place-1 .podium-avatar,.place-1>b{animation-delay:1.2s}
+@keyframes fx-rise{to{transform:scaleY(1)}}
+@keyframes fx-drop{0%{opacity:0;transform:translateY(-30px)}100%{opacity:1;transform:translateY(0)}}
+@keyframes fx-fade-in{to{opacity:1}}
+.ranking.animated>div{opacity:0;animation:fx-row .35s ease-out forwards}
+.ranking.animated>div:nth-child(1){animation-delay:1.4s}.ranking.animated>div:nth-child(2){animation-delay:1.5s}.ranking.animated>div:nth-child(3){animation-delay:1.6s}.ranking.animated>div:nth-child(n+4){animation-delay:1.7s}
+@keyframes fx-row{0%{opacity:0;transform:translateX(-16px)}100%{opacity:1;transform:translateX(0)}}
+
+@media(prefers-reduced-motion:reduce){
+ .fx-layer{display:none}
+ .podium-step,.podium-avatar,.podium-col>b,.ranking.animated>div{animation:none;opacity:1;transform:none}
+ .podium-crown{animation:none}
+}
+
+/* ---------- 掷骰：棋盘中央大骰子 ---------- */
+.fx-dice{position:fixed;z-index:16;pointer-events:none;width:0;height:0}
+.fx-dice>*{position:absolute;left:0;top:0}
+.fx-dice-body{width:88px;height:88px;margin:-44px 0 0 -44px;animation:fx-dice-in .22s cubic-bezier(.3,1.5,.5,1) both}
+.fx-die-face{display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);gap:7px;width:100%;height:100%;padding:13px;background:#fffdf3;border:3px solid #33463a;border-radius:14px;box-shadow:inset -6px -7px 0 #e7e1c6,inset 4px 4px 0 #ffffff,0 6px 0 #33463a}
+.fx-die-face i{border-radius:3px}
+.fx-die-face i.dot{background:var(--owner);box-shadow:inset -2px -2px 0 #00000033}
+.fx-dice.roll .fx-die-face{animation:fx-dice-tumble .3s linear infinite}
+.fx-dice.roll .fx-dice-body{animation:fx-dice-in .22s cubic-bezier(.3,1.5,.5,1) both,fx-dice-hop .3s ease-in-out .22s infinite}
+.fx-dice-shadow{width:84px;height:16px;margin:46px 0 0 -42px;border-radius:50%;background:#2b2f2a;opacity:.18;animation:fx-dice-shadow .3s ease-in-out infinite}
+.fx-dice.land .fx-dice-body{animation:fx-dice-land .72s cubic-bezier(.3,1.6,.5,1) forwards}
+.fx-dice.land .fx-dice-shadow{animation:fx-fade .5s ease-in .3s forwards}
+.fx-dice-ring{--owner:var(--owner);width:150px;max-width:none;margin:0;left:0;top:0}
+.fx-dice-value{left:0;top:58px;transform:translateX(-50%);padding:3px 12px;background:var(--owner);color:#fffdf0;font:400 20px/1.2 'ZCOOL KuaiLe',sans-serif;letter-spacing:2px;white-space:nowrap;box-shadow:0 3px 0 #00000030;animation:fx-dice-value .72s ease-out forwards}
+@keyframes fx-dice-in{0%{opacity:0;transform:translateY(-60px) scale(.4)}100%{opacity:1;transform:translateY(0) scale(1)}}
+@keyframes fx-dice-hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-22px)}}
+@keyframes fx-dice-shadow{0%,100%{transform:scale(1);opacity:.2}50%{transform:scale(.6);opacity:.1}}
+@keyframes fx-dice-tumble{0%{transform:rotate(0) scale(1,1)}25%{transform:rotate(90deg) scale(.82,1.08)}50%{transform:rotate(180deg) scale(1,1)}75%{transform:rotate(270deg) scale(1.08,.82)}100%{transform:rotate(360deg) scale(1,1)}}
+@keyframes fx-dice-land{0%{opacity:1;transform:scale(1.25,.8)}22%{transform:scale(.92,1.1) translateY(-6px)}40%{transform:scale(1)}75%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.7) translateY(10px)}}
+@keyframes fx-dice-value{0%{opacity:0;transform:translate(-50%,-8px) scale(.6)}25%{opacity:1;transform:translate(-50%,0) scale(1.1)}35%{transform:translate(-50%,0) scale(1)}80%{opacity:1}100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.fx-dice{display:none}}
+
+/* ---------- 使用道具：棋子上方弹出道具牌 ---------- */
+.fx-item{position:fixed;display:flex;align-items:center;gap:6px;padding:4px 10px 4px 4px;background:#fffdf0;border:2px solid var(--owner);box-shadow:3px 3px 0 #3d4a3a33;white-space:nowrap;opacity:0;transform:translate(-50%,-100%);animation:fx-item 1.5s cubic-bezier(.3,1.5,.5,1) forwards}
+.fx-item>span{display:grid;place-items:center;width:28px;height:28px;background:var(--owner);color:#fffdf0}
+.fx-item b{font:400 15px/1.1 'ZCOOL KuaiLe',sans-serif;color:#33463a;letter-spacing:1px}
+.fx-item small{font-size:11px;color:#66725a}
+@keyframes fx-item{0%{opacity:0;transform:translate(-50%,-60%) scale(.5)}18%{opacity:1;transform:translate(-50%,-130%) scale(1.05)}28%{transform:translate(-50%,-125%) scale(1)}80%{opacity:1;transform:translate(-50%,-135%)}100%{opacity:0;transform:translate(-50%,-160%)}}

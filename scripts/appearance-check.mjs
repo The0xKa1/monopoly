@@ -14,7 +14,7 @@ try {
  await seed(old);
  assert.equal((await state()).players[0].cash,9456);assert.equal((await state()).properties[1].level,1);
  const before=await state();
- await page.getByRole('button',{name:'编辑我的外观'}).click();
+ await page.getByRole('button',{name:'编辑我的昵称与外观'}).click();
  await page.getByRole('button',{name:'发型：长发',exact:true}).click();
  await page.getByRole('button',{name:'服装',exact:true}).click();
  await page.getByRole('button',{name:'上衣：砖红',exact:true}).click();
@@ -23,7 +23,7 @@ try {
  await page.getByRole('button',{name:'动作预览',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('.appearance-stage img').dataset.frame==='1');
  await page.screenshot({path:'artifacts/appearance-custom-mobile.png',fullPage:true,animations:'disabled'});
- await page.getByRole('button',{name:'保存外观',exact:true}).click();
+ await page.getByRole('button',{name:'保存',exact:true}).click();
  const after=await state(),appearance=after.players[0].appearance;
  assert.equal(appearance.shirt,'red');assert.equal(appearance.hair,'long');assert.equal(appearance.glasses,'round');
  const withoutAppearance=s=>{s.players.forEach(p=>delete p.appearance);return s;};
@@ -32,12 +32,12 @@ try {
  await page.keyboard.press('Escape');
  for(const selector of ['.roster-strip [data-avatar="0"]','[data-token="0"] img','.activity-person img'])assert.equal(await page.locator(selector).getAttribute('src'),source(appearance));
  await page.reload();assert.deepEqual((await state()).players[0].appearance,appearance);
- await page.getByRole('button',{name:'编辑我的外观'}).click();
+ await page.getByRole('button',{name:'编辑我的昵称与外观'}).click();
  await page.getByRole('button',{name:'肤色：深肤',exact:true}).click();await page.getByRole('button',{name:'取消',exact:true}).click();
  assert.deepEqual((await state()).players[0].appearance,appearance);
  // Each player can be edited independently through their wallet.
- await page.locator('.roster-strip button').nth(2).click();await page.getByRole('button',{name:'编辑外观',exact:true}).click();
- await page.getByRole('button',{name:'发型：卷发',exact:true}).click();await page.getByRole('button',{name:'保存外观',exact:true}).click();
+ await page.locator('.roster-strip button').nth(2).click();await page.getByRole('button',{name:'编辑昵称与外观',exact:true}).click();
+ await page.getByRole('button',{name:'发型：卷发',exact:true}).click();await page.getByRole('button',{name:'保存',exact:true}).click();
  assert.equal((await state()).players[2].appearance.hair,'curly');assert.deepEqual((await state()).players[0].appearance,appearance);await page.keyboard.press('Escape');
  await page.getByRole('button',{name:'重新开始',exact:true}).click();await page.getByRole('button',{name:'确认重开',exact:true}).click();
  assert.deepEqual((await state()).players[0].appearance,appearance);assert.equal((await state()).players[0].cash,12000);
@@ -45,7 +45,7 @@ try {
  let s=await state();s.players[0].controlled=6;await seed(s);
  await page.getByRole('button',{name:'掷骰子',exact:true}).click();
  await page.waitForFunction(()=>document.querySelector('.activity-ribbon').dataset.motion==='walk');
- await page.getByRole('button',{name:'编辑我的外观'}).click();await page.getByRole('button',{name:'发型：卷发',exact:true}).click();await page.getByRole('button',{name:'保存外观',exact:true}).click();
+ await page.getByRole('button',{name:'编辑我的昵称与外观'}).click();await page.getByRole('button',{name:'发型：卷发',exact:true}).click();await page.getByRole('button',{name:'保存',exact:true}).click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('city-dice-v1')).players[0].pos===6);
  assert.equal((await state()).players[0].appearance.hair,'curly');assert.equal((await state()).players[0].cash,12000);await page.keyboard.press('Escape');
  // Money transfers must use the same customized portrait.
@@ -54,7 +54,7 @@ try {
  assert.equal(await page.locator('.transfer-from img').getAttribute('src'),source(s.players[0].appearance));
  await page.waitForFunction(()=>!document.querySelector('.transfer-toast'));
  for(const width of [320,1440]) {
-  await page.setViewportSize({width,height:900});await page.getByRole('button',{name:'编辑我的外观'}).click();
+  await page.setViewportSize({width,height:900});await page.getByRole('button',{name:'编辑我的昵称与外观'}).click();
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   await page.screenshot({path:`artifacts/appearance-${width}.png`,fullPage:true,animations:'disabled'});await page.keyboard.press('Escape');
  }
