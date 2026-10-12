@@ -22,7 +22,7 @@ tags: [handoff]
 - 大厅/准备页320/390/1440布局、人物外观、动画与减少动态检查通过；联机协议和规则不变。截图在 `artifacts/lobby-pixel/`，音频验证在 `artifacts/audio-integration/`。
 - 已核对四份 docs 并清理过期试听状态；正式音乐、原创来源、生成源和测试入口见 assets.md / index.md。
 - 已按 cwd 和进程确认归属后关闭 Vite 5180、Wrangler 8787/8788及9230/9231调试端口，移除三个项目 tmux 会话；其他项目服务保留。公网部署继续运行。
-- GitHub：此前联机 PR #1 已合并；本轮从 origin/main 建立 `codex/pixel-lobby-audio`，通过新 PR 交付像素大厅、四首音乐、独立音频设置及文档。
+- GitHub：此前联机 PR #1 已合并；本轮 `codex/pixel-lobby-audio` 已推送，功能提交 `3c600e1`；[PR #2](https://github.com/The0xKa1/monopoly/pull/2) 交付像素大厅、四首音乐、独立音频设置及文档，待审查合并。
 - 本轮发布前已完成下列测试；收尾仅整理文档和关闭服务，未重复运行应用测试。
 
 ## 2026-10-12 · 公网发布与GitHub交付
