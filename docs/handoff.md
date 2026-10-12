@@ -8,12 +8,14 @@ tags: [handoff]
 
 # 工作交接
 
-## 2026-10-12 · 密封拍卖（本地待验收）
+## 2026-10-12 · 密封拍卖发布
 - 按用户要求改为同时保密报价：每人一次，可放弃；全部提交后公开，最高价者按自己的报价付款，同价最高者随机抽签（用户最终确认）。底价保持原价50%，城市及共用拍卖流程的产业一致。
 - 涉及 `src/game.js` / `economy.js` / `ai.js`、PropertyActions / BoardHub / 联机界面及 `server/room.js` / `worker.js`；服务端只向本人返回自己的报价，共用120秒截止时间，同轮版本竞态可接收且不可重复改价。
 - AI独立报价；刷新保留提交，旧存档正在进行的公开拍卖继续原规则，之后新拍卖使用暗标。全部报价在揭晓面板及公告展示。
 - 189/189测试、生产构建、单机经济交互及原有联机流程回归、双浏览器暗标隐私/刷新/同版本并发/同价抽签/一次扣款及320/390/1440布局检查通过，无JS异常；截图在 `artifacts/sealed-auction/`。
-- 本轮尚未部署、提交或推送。预览服务5180、8787/8788由 `monopoly-sealed-*` tmux会话运行；本节覆盖下方上轮服务关闭状态。
+- 用户授权部署、push和merge；功能提交 `f7ffc05` 已推送至 `codex/pixel-lobby-audio`，与像素大厅/音乐一起通过 [PR #2](https://github.com/The0xKa1/monopoly/pull/2) 交付。
+- 公网验收通过：双浏览器暗标保密、刷新恢复、同轮并发及同价抽签，原有联机权限/收购/收租/重连回归；HTTPS 200，JS/CSS及四首WAV字节数与SHA-256匹配本地构建。
+- Worker版本 `71e1faad-6007-4e3c-98d0-368bfe1691cf`；Pages `f50627a2.monopoly-the0xka1.pages.dev`，正式域名 `https://monopoly.the0xka1.cc/`。本地5180、8787/8788仍由 `monopoly-sealed-*` tmux会话运行。
 
 ## 2026-10-12 · 四首音乐与音频设置发布
 - 已接入大厅/准备/常规/后期四首获选音乐；`src/music.js` 管理按需解码、精确PCM循环、切歌竞态与后台暂停恢复；`src/AudioSettings.jsx` 常驻管理两类声音。
@@ -29,7 +31,7 @@ tags: [handoff]
 - 大厅/准备页320/390/1440布局、人物外观、动画与减少动态检查通过；联机协议和规则不变。截图在 `artifacts/lobby-pixel/`，音频验证在 `artifacts/audio-integration/`。
 - 已核对四份 docs 并清理过期试听状态；正式音乐、原创来源、生成源和测试入口见 assets.md / index.md。
 - 已按 cwd 和进程确认归属后关闭 Vite 5180、Wrangler 8787/8788及9230/9231调试端口，移除三个项目 tmux 会话；其他项目服务保留。公网部署继续运行。
-- GitHub：此前联机 PR #1 已合并；本轮 `codex/pixel-lobby-audio` 已推送，功能提交 `3c600e1`；[PR #2](https://github.com/The0xKa1/monopoly/pull/2) 交付像素大厅、四首音乐、独立音频设置及文档，待审查合并。
+- GitHub：此前联机 PR #1 已合并；本轮 `codex/pixel-lobby-audio` 已推送，功能提交 `3c600e1`；[PR #2](https://github.com/The0xKa1/monopoly/pull/2) 交付像素大厅、四首音乐、独立音频设置及文档；最新交付见上方密封拍卖发布记录。
 - 本轮发布前已完成下列测试；收尾仅整理文档和关闭服务，未重复运行应用测试。
 
 ## 2026-10-12 · 公网发布与GitHub交付

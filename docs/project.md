@@ -135,7 +135,7 @@ node scripts/board-viewport-check.mjs
 浏览器检查依赖开发服务和本机 Google Chrome；构建输出为 `dist/`。
 ## 阶段边界
 当前没有微信登录、排行榜、支付或微信发布包。
-已部署 Cloudflare Pages + Durable Objects；2026-10-12发布联机、新局经济规则（防守费30%）、像素动态大厅及四首BGM/独立音频设置，GitHub通过功能分支PR交付，未提交微信审核。
+已部署 Cloudflare Pages + Durable Objects；2026-10-12发布联机、新局经济规则（防守费30%）、像素动态大厅、四首BGM/独立音频设置及密封拍卖，GitHub通过功能分支PR交付，未提交微信审核。
 联机先进行朋友间试玩；20 人同局经济平衡与大陆不同运营商访问质量需实际反馈。
 ## 联机部署
 - 入口：`https://monopoly-the0xka1.pages.dev`；自定义域名 `monopoly.the0xka1.cc` 已在 Pages 绑定，NameSilo CNAME 指向前述 Pages 主机，DNS/证书状态见交接。
