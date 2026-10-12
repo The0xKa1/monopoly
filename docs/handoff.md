@@ -8,6 +8,32 @@ tags: [handoff]
 
 # 工作交接
 
+## 2026-10-12 · 密封拍卖发布
+- 按用户要求改为同时保密报价：每人一次，可放弃；全部提交后公开，最高价者按自己的报价付款，同价最高者随机抽签（用户最终确认）。底价保持原价50%，城市及共用拍卖流程的产业一致。
+- 涉及 `src/game.js` / `economy.js` / `ai.js`、PropertyActions / BoardHub / 联机界面及 `server/room.js` / `worker.js`；服务端只向本人返回自己的报价，共用120秒截止时间，同轮版本竞态可接收且不可重复改价。
+- AI独立报价；刷新保留提交，旧存档正在进行的公开拍卖继续原规则，之后新拍卖使用暗标。全部报价在揭晓面板及公告展示。
+- 189/189测试、生产构建、单机经济交互及原有联机流程回归、双浏览器暗标隐私/刷新/同版本并发/同价抽签/一次扣款及320/390/1440布局检查通过，无JS异常；截图在 `artifacts/sealed-auction/`。
+- 用户授权部署、push和merge；功能提交 `f7ffc05` 已推送至 `codex/pixel-lobby-audio`，与像素大厅/音乐一起通过 [PR #2](https://github.com/The0xKa1/monopoly/pull/2) 交付。
+- 公网验收通过：双浏览器暗标保密、刷新恢复、同轮并发及同价抽签，原有联机权限/收购/收租/重连回归；HTTPS 200，JS/CSS及四首WAV字节数与SHA-256匹配本地构建。
+- Worker版本 `71e1faad-6007-4e3c-98d0-368bfe1691cf`；Pages `f50627a2.monopoly-the0xka1.pages.dev`，正式域名 `https://monopoly.the0xka1.cc/`。本地5180、8787/8788仍由 `monopoly-sealed-*` tmux会话运行。
+
+## 2026-10-12 · 四首音乐与音频设置发布
+- 已接入大厅/准备/常规/后期四首获选音乐；`src/music.js` 管理按需解码、精确PCM循环、切歌竞态与后台暂停恢复；`src/AudioSettings.jsx` 常驻管理两类声音。
+- 大厅、准备和棋盘都有音频设置入口，独立开关/音量、音效试听、音乐状态及失败重试；设置自动保存，兼容旧音效静音。首次交互解锁，刷新保留。
+- 有限轮数最后四分之一转后期（20轮从16轮起），无限轮数41轮起；结束时停BGM保留原胜利音效。图鉴/规则弹窗沿用当前阶段，房间信息播放准备曲。
+- `public/assets/music/` 四首WAV及清单，`scripts/prepare-music.py` 可重建；大厅新增真正循环版。修改音效引擎支持独立音量；未修改游戏规则。
+- 构建、183项测试、320/390/1440设置/选曲/暂停恢复浏览器检查及原音效输出检查通过；单机流程和双浏览器联机回归通过，无JS异常。用户确认后已发布 Pages 生产环境 `f08f38d8.monopoly-the0xka1.pages.dev`；Worker无变更。
+
+- 正式域名四首WAV与JS/CSS字节数和SHA-256均匹配本地构建，HTTPS 200；双浏览器联机回归通过。音乐检查通过：手势解锁、独立音量/静音、设置持久化、联机开局/房间切歌、常规/后期阈值、后台恢复、结算停止及320/390/1440设置界面，无JS异常。
+
+## 2026-10-12 · 像素大厅与收尾
+- `src/NetworkApp.jsx` / `src/network.css`：城市街景、像素按钮与准备玩家卡片；复用城市库和 PixelPlayer，加入散步、云鸟水面、阳光与待机动画，支持暂停、后台暂停和系统减少动态。
+- 大厅/准备页320/390/1440布局、人物外观、动画与减少动态检查通过；联机协议和规则不变。截图在 `artifacts/lobby-pixel/`，音频验证在 `artifacts/audio-integration/`。
+- 已核对四份 docs 并清理过期试听状态；正式音乐、原创来源、生成源和测试入口见 assets.md / index.md。
+- 已按 cwd 和进程确认归属后关闭 Vite 5180、Wrangler 8787/8788及9230/9231调试端口，移除三个项目 tmux 会话；其他项目服务保留。公网部署继续运行。
+- GitHub：此前联机 PR #1 已合并；本轮 `codex/pixel-lobby-audio` 已推送，功能提交 `3c600e1`；[PR #2](https://github.com/The0xKa1/monopoly/pull/2) 交付像素大厅、四首音乐、独立音频设置及文档；最新交付见上方密封拍卖发布记录。
+- 本轮发布前已完成下列测试；收尾仅整理文档和关闭服务，未重复运行应用测试。
+
 ## 2026-10-12 · 公网发布与GitHub交付
 - 发布联机功能、四项新局经济机制、30%防守费和像素反馈；连接页两按钮改为绿色主按钮/浅色次按钮，44px触控高度、独立间距。
 - Worker版本 e92ec125-6f26-4910-bb59-4c09f34df591；Pages生产分支main。自定义域名 https://monopoly.the0xka1.cc 已HTTPS 200，可正常使用。
@@ -43,7 +69,7 @@ tags: [handoff]
 ## 2026-10-11 · 联机开发与 Cloudflare 部署
 - 用户选定全部 Cloudflare + NameSilo CNAME，域名 `monopoly.the0xka1.cc`；不迁移 NS，不影响根域名及 www 原站。
 - 先将 `ljy-dev` 快进合并到 main（205f27f），测试 149/149、构建及本地浏览器检查通过。旧脏文档已备份至 `/tmp/monopoly-local-docs-20261011/`。
-- 本轮在 `codex/multiplayer-cloudflare` 分支开发，未提交、未推送。工作区含本次源码和原有文档改动，勿覆盖。
+- 原联机开发由 `codex/multiplayer-cloudflare` / PR #1 交付并合并；历史验证见下。
 - 新增大厅、创建/加入/邀请码、准备、地图/轮数/AI 配置、昵称外观、房主移除大厅角色；2～20 个角色，开局后锁定名单。
 - `server/room.js` 复用现有规则：服务端权威 RNG、身份/决策人/阶段校验、版本冲突提示、持久化去重；抽卡候选和随机种子不下发。
 - `server/worker.js` 使用 SQLite Durable Object 持久化、休眠 WebSocket、120 秒超时 AI；所有人断线暂停，最后一次操作后 7 天清理。
@@ -53,7 +79,7 @@ tags: [handoff]
 - 20 真人满员/第 21 人拒绝、竞争操作不覆写新状态、两轮混合对局完成的测试也通过。
 - 默认 Pages 入口：`https://monopoly-the0xka1.pages.dev`；首次正式部署 `2529ae13-6b63-4ad6-8c18-5ba2f96b03d3`。
 - Worker：`monopoly-rooms`，SQLite 类 `GameRoom` / `TrafficGuard`，migration v1；账号默认子域名已初始化为 the0xka1。
-- 自定义域名已在 Pages 添加；用户已在 NameSilo 添加 CNAME，并提供截图确认主机/目标正确。22:50 权威 DNS 仍 NXDOMAIN，Pages pending / CNAME record not set；等待注册商传播后核实 HTTPS。
+- 自定义域名使用 NameSilo CNAME，DNS传播与证书现已完成；当前HTTPS及资源校验见顶部。
 - 本轮验证：157 项 Node 测试全部通过；构建通过；npm audit 无漏洞；单机 browser-check 通过。
 - 本地与 Pages 公网的双浏览器检查通过：独立身份、非本人回合拒绝、购买、真人业主拒绝收购、租金同步、刷新/重连、存档隔离、1440/390px 无溢出、无 JS 异常。
 - 本地与 Pages 公网协议检查通过：跨站拒绝、正文上限、隐藏候选/种子、重复命令不重复执行、禁止中途加入、服务器 AI alarm 推进与重连恢复。
@@ -105,14 +131,14 @@ NODE_USE_ENV_PROXY=1 BASE_URL=https://monopoly-the0xka1.pages.dev node scripts/m
 - 到站后提交游戏状态，重开取消旧动画；刷新恢复最后一次已提交状态。
 - 每笔真实收支驱动金币流向、金额滚动和交易双方头像；资产收起时仍显示交易反馈。
 - Web Audio 原创合成骰子、脚步、到站及金币音效；默认开启，首次交互解锁。
-- 音效偏好键 `city-dice-sound`；进度键 `city-dice-v1`；均为浏览器本地存储。
+- 音频偏好键 `monopoly-audio-v1`（兼容 `city-dice-sound`）；进度键 `city-dice-v1`；均为浏览器本地存储。
 ## 历史验证约定
 - 既有版本完成城市库、外观、音效、卡牌、产业和响应式布局；历史验证不替代修改后的实际检查。
 ## 接手与待办
-- 浏览器地址通常为 `http://localhost:5173/`，接手时核实服务与端口；优先复用，不强杀进程。
+- 本轮本地服务运行于5180、8787/8788；接手时先查端口归属并复用健康服务，不强杀进程。
 - 测试入口见 project.md；浏览器脚本需要开发服务和本机 Chrome。
 - CodeGraph 索引在 `.codegraph/`；遵循根目录 agents.md 的规则和本地文件结构。
-- 目前没有微信登录、排行榜、支付、微信发布包或提交审核。origin 为 `git@github.com:The0xKa1/monopoly.git`，本次联机代码仍在本地功能分支。
+- 目前没有微信登录、排行榜、支付、微信发布包或提交审核。origin 为 `git@github.com:The0xKa1/monopoly.git`，联机 PR #1 已合并，本轮 UI/音频交付见顶部记录。
 - 20 人同局的经济平衡与等待时长尚待实际体验反馈；AI 阈值集中在 ai.js 的 TUNE。
 - 后续可按体验反馈调整大小地图的节奏、价格、色组与 AI 策略。
 - 修改像素素材优先修改生成源，生成脚本会覆盖对应 SVG。

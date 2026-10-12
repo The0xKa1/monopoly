@@ -11,6 +11,12 @@ tags: [assets]
 正式素材统一放在 `public/assets/`，浏览器通过 `/assets/` 路径访问。
 美术方向：奶油色、鼠尾草绿、暖金色与低分辨率像素地标；字体和图标与界面统一。
 
+## 已接入背景音乐（2026-10-12）
+- 四首获用户选定：大厅《田埂午后》、准备《窗边等你》、常规《街角慢跑》、后期《夜色将至》。
+- `public/assets/music/{lobby,ready,playing,late}.wav` 为无损32kHz双声道循环母版；`manifest.json` 记录时长、字节数与SHA-256，总约25MB，按需加载。
+- 来源均为本项目原创旋律和程序合成，无第三方采样/旋律或额外素材许可。运行 `python3 scripts/prepare-music.py` 调用四份合成源并复制正式素材；需要NumPy，AAC试听仅在系统有afconvert时生成。
+- 大厅正式版取16小节主题并将尾音回绕；其余使用获选循环母版。试听目录的淡出文件不作游戏循环。下方目录保留候选与获选曲试听产物，不随部署发布。
+
 ## 正式资产清单
 
 | 路径（相对项目根目录） | 内容 | 来源与维护方式 |
@@ -95,6 +101,32 @@ tags: [assets]
 - `src/PixelEconomyIcon.jsx`：24×24网格原创SVG，拍卖槌、产权盾、银行、补给箱；本项目手写路径生成，React直接渲染，无外部素材或第三方许可证要求。
 - `src/economy-fx.css` / `src/FxLayer.jsx`：阶梯动画、落槌/盖章/缴费金币/补给提示；只读提交状态，减少动态时关闭。
 - `artifacts/economy-rebalance/` 保存验收截图，仅为验证产物，不作正式资产。
+
+## 2026-10-12 · 像素联机大厅
+- `src/NetworkApp.jsx` / `src/network.css`：原创 CSS 网格、像素云朵/太阳/街道、硬边框；复用城市库 getCity().asset 和 PixelPlayer，无新增外部素材或许可证。
+- 动画复用 PixelPlayer 两帧步行；CSS 实现人物散步、云朵/鸟/水面/阳光与已准备角色待机。可暂停、后台暂停、系统减少动态时静止，无新外部资产。
+- `artifacts/lobby-pixel/`：大厅首页、准备大厅 1440/390/320px、外观编辑与动画验证截图，本地验证产物。
+
+## 2026-10-12 · 初版背景音乐候选（未采用）
+- `scripts/synthesize-bgm.py`：本项目原创旋律与程序合成，NumPy 生成带限方波/三角波、噪声鼓点；无第三方采样或旋律，无额外第三方素材许可依赖。
+- `artifacts/bgm-v1/`：大厅108、准备88、常规对局116、后期140、结算104 BPM；WAV试听/循环母版、AAC试听、连播与 manifest.json。仅本地候选，未放入 public 或部署。
+- 运行 `python3 scripts/synthesize-bgm.py` 重建WAV/清单；AAC用系统 afconvert（m4af/aac，160kbps）转换；index.html 为本地试听页。
+
+## 2026-10-12 · 乡间民谣 8-bit 第二版试听
+- `scripts/synthesize-folk-bgm.py`：原创《田埂午后》，F大调、92BPM、62:38摇摆；拨弦/芯片笛音、交替低音、木质敲击与轻刷声，全程序合成，无第三方采样或引用旋律。
+- `artifacts/bgm-folk-v2/`：约53秒WAV/AAC、参数清单与试听页；脚本可完整重建。保留带引子/结尾试听，并新增约42秒精确循环母版供正式接入。
+
+## 2026-10-12 · 准备界面音乐候选
+- 《田埂午后》已用于大厅。用户已选定《窗边等你》用于准备界面：78BPM、3/4拍、降B大调、芯片FM电钢琴/柔和低音。
+- `scripts/synthesize-ready-bgm.py` 完整重建 `artifacts/bgm-ready-v2/`：47秒WAV/AAC试听、约37秒PCM循环版、清单与试听页；全原创合成，无第三方素材；循环版已发布。
+
+## 2026-10-12 · 常规对局音乐试听
+- `scripts/synthesize-playing-bgm.py` 原创《街角慢跑》：112BPM、降E大调、32小节；短促芯片旋律/切分低音/轻鼓点，第三段减少配器。无第三方采样或旋律。
+- `artifacts/bgm-playing-v2/` 保存69秒试听、精确PCM循环母版、连续两轮试听、AAC、清单与试听页；脚本可重建。循环接缝保留原始样本，只有试听首尾淡入淡出；循环版已发布。
+
+## 2026-10-12 · 后期对局音乐候选
+- 常规对局《街角慢跑》已接入。后期获选曲《夜色将至》：120BPM、D小调、24小节，低音3+3+2脉冲与短句，中段稀疏，无强军鼓/高频踩镲。
+- `scripts/synthesize-late-bgm.py` 完整生成 `artifacts/bgm-late-v2/`：48秒试听/PCM循环母版、96秒连播、AAC/清单/试听页；原创程序合成，无第三方素材，循环版已发布。
 
 ## 后续维护
 - `artifacts/reconnect-{320,390,1440}.png`：连接页按钮样式验收截图，沿用配色与字体，无新增外部资产。

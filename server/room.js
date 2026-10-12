@@ -1,4 +1,5 @@
 import {initialState,transition,decisionPlayer,aiAction} from '../src/game.js';
+import {pendingBidders,canBid} from '../src/economy.js';
 import {generateMap} from '../src/board.js';
 import {playerNameError,MAX_PLAYERS} from '../src/players.js';
 import {normalizeAppearance} from '../src/appearance.js';
@@ -18,18 +19,19 @@ export function joinRoom(room,profile,key,now=Date.now()) {
  return {...room,version:room.version+1,updated:now,seats:[...room.seats,{key,kind:'human',name:profile.name.trim(),appearance:normalizeAppearance(profile.appearance,room.seats.length),ready:false}]};
 }
 // Broadcast only public fields. Tokens, receipts and unrevealed card identities stay in the room.
-export function publicRoom(room,online=[]) {
+export function publicRoom(room,online=[],viewer=null) {
  const game=room.game?structuredClone(room.game):null;
+ if(game?.auction?.mode==='sealed'){const a=game.auction;a.ownBid=Number.isInteger(viewer)&&Object.hasOwn(a.bids,viewer)?a.bids[viewer]:undefined;delete a.bids;}
  if(game?.eventDraw)game.eventDraw.offerIds=game.eventDraw.offerIds.map((_,i)=>`hidden-${i}`);
  return {code:room.code,version:room.version,status:room.status,host:room.seats.findIndex(s=>s.key===room.host),settings:room.settings,seats:room.seats.map(({name,appearance,kind,ready,key})=>({name,appearance,kind,ready,online:online.includes(key)})),game,readyAt:room.readyAt,deadline:room.deadline};
 }
-const fields={CARD:['card','value'],ROLL:[],DRAW_EVENT:['index'],RESOLVE_EVENT:[],EVENT_CHOICE:['value'],EVENT_DESTINATION:['tile'],BUY:[],UPGRADE:[],OFFER:[],OFFER_REPLY:['accept'],CONTEST:[],CONTEST_REPLY:['accept'],AUCTION_BID:['amount'],AUCTION_PASS:[],PAY_RENT:[],MORTGAGE:['tile'],SETTLE_DEBT:[],BANKRUPT:[],REDEEM:['tile'],END:[]};
+const fields={CARD:['card','value'],ROLL:[],DRAW_EVENT:['index'],RESOLVE_EVENT:[],EVENT_CHOICE:['value'],EVENT_DESTINATION:['tile'],BUY:[],UPGRADE:[],OFFER:[],OFFER_REPLY:['accept'],CONTEST:[],CONTEST_REPLY:['accept'],AUCTION_BID:['amount','auctionId'],AUCTION_PASS:['auctionId'],PAY_RENT:[],MORTGAGE:['tile'],SETTLE_DEBT:[],BANKRUPT:[],REDEEM:['tile'],END:[]};
 export function safeAction(input,actor,rng=random) {
  check(input&&Object.hasOwn(fields,input.type),'未知操作');
  const action={type:input.type,actor};
- for(const field of fields[input.type])action[field]=input[field];
+ for(const field of fields[input.type])if(input[field]!==undefined)action[field]=input[field];
  if(action.type==='ROLL'){action.value=1+Math.floor(rng()*6);action.eventSeed=rng();}
- if(action.type==='RESOLVE_EVENT')action.seed=rng();
+ if(['RESOLVE_EVENT','AUCTION_BID','AUCTION_PASS'].includes(action.type))action.seed=rng();
  return action;
 }
 // A conservative animation window lets every client finish before the next decision.
@@ -42,7 +44,8 @@ export function applyCommand(room,key,message,now=Date.now(),rng=random) {
  const seat=room.seats.findIndex(s=>s.key===key&&s.kind==='human');check(seat>=0,'身份已失效');
  check(typeof message.id==='string'&&/^[\w-]{8,80}$/.test(message.id),'操作编号无效');
  if(room.recent.some(r=>r.key===key&&r.id===message.id))return {room,duplicate:true};
- check(message.version===room.version,'状态已更新，请重试');
+ const sealed=message.type==='action'&&['AUCTION_BID','AUCTION_PASS'].includes(message.action?.type)&&canBid(room.game||{},seat)&&message.action.auctionId===room.game.auction.id;
+ check(message.version===room.version||(sealed&&Number.isInteger(message.version)&&message.version<room.version),'状态已更新，请重试');
  const next=structuredClone(room);let action=null;
  const host=key===room.host;
  if(message.type==='ready'){
@@ -74,7 +77,7 @@ export function applyCommand(room,key,message,now=Date.now(),rng=random) {
   }
   next.game=initialState(next.seats,generateMap(room.settings.kind,room.settings.size,rng),undefined,{roundLimit:room.settings.rounds});
   // The local prototype's seat perks remain local; online starts everyone on equal terms.
-  next.game.multiplayer=true;
+  next.game.multiplayer=true;next.game.auctionSession=crypto.randomUUID();
   next.game.players.forEach(p=>{p.cards={dice:2,shield:1,build:1};});
   next.status='playing';next.readyAt=now;next.deadline=now+HUMAN_TIMEOUT;
  }else if(message.type==='lobby'){
@@ -84,23 +87,31 @@ export function applyCommand(room,key,message,now=Date.now(),rng=random) {
  }else if(message.type==='action'){
   check(room.status==='playing','对局尚未开始或已经结束');
   check(now>=room.readyAt,'请等待动画结束');
-  check(decisionPlayer(room.game)===seat,'现在不是你的决策回合');
+  check(sealed||(room.game.auction?.mode!=='sealed'&&decisionPlayer(room.game)===seat),'现在不是你的决策回合');
   action=safeAction(message.action,seat,rng);
   const game=transition(room.game,action);check(game!==room.game,'当前阶段不能执行此操作');
   next.game=game;next.status=game.phase==='finished'?'finished':'playing';
-  next.readyAt=now+animationDelay(room.game,game,action);next.deadline=next.readyAt+HUMAN_TIMEOUT;
+  if(sealed&&game.auction?.id===room.game.auction.id&&game.phase==='auction'){next.readyAt=room.readyAt;next.deadline=room.deadline;}
+  else {next.readyAt=now+animationDelay(room.game,game,action);next.deadline=next.readyAt+HUMAN_TIMEOUT;}
  }else throw new RoomError('未知房间操作');
  next.version++;next.updated=now;next.recent=[...next.recent,{key,id:message.id}].slice(-256);
  return {room:next,action};
 }
+export function automaticActor(room){
+ const pending=pendingBidders(room.game||{});
+ return pending.find(id=>room.seats[id].kind==='ai')??pending[0]??decisionPlayer(room.game);
+}
 export function advanceAI(room,now=Date.now(),rng=random) {
  if(room.status!=='playing'||now<room.readyAt)return {room};
- const actor=decisionPlayer(room.game);
+ const actor=automaticActor(room);
  if(room.seats[actor].kind!=='ai'&&now<room.deadline)return {room};
  // Neither humans nor AI can inspect the backs of event cards.
- const input=room.game.phase==='draw'?{type:'DRAW_EVENT',index:Math.floor(rng()*room.game.eventDraw.offerIds.length)}:aiAction(room.game,rng);
+ const aiGame=structuredClone(room.game);
+ if(aiGame.auction?.mode==='sealed'){aiGame.auction.active=[actor,...aiGame.auction.active.filter(id=>id!==actor)];aiGame.auction.bids={};}
+ const input=room.game.phase==='draw'?{type:'DRAW_EVENT',index:Math.floor(rng()*room.game.eventDraw.offerIds.length)}:aiAction(aiGame,rng);
  const action=safeAction(input,actor,rng),game=transition(room.game,action);
  check(game!==room.game,'自动行动未能推进对局');
- const readyAt=now+animationDelay(room.game,game,action);
- return {room:{...room,game,version:room.version+1,updated:now,status:game.phase==='finished'?'finished':'playing',readyAt,deadline:readyAt+HUMAN_TIMEOUT},action};
+ const continuing=room.game.auction?.mode==='sealed'&&game.phase==='auction'&&game.auction?.id===room.game.auction.id;
+ const readyAt=continuing?room.readyAt:now+animationDelay(room.game,game,action);
+ return {room:{...room,game,version:room.version+1,updated:now,status:game.phase==='finished'?'finished':'playing',readyAt,deadline:continuing?room.deadline:readyAt+HUMAN_TIMEOUT},action};
 }

@@ -1,9 +1,9 @@
-import React from 'react';
+import React,{useState} from 'react';
 import {PixelEconomyIcon} from './PixelEconomyIcon.jsx';
 import {Landmark,Handshake} from 'lucide-react';
 import {getTiles} from './board.js';
 import {money,ownedAssets,mortgageValue,purchaseQuote,decisionPlayer} from './game.js';
-import {auctionMinimum,canContest,contestQuote} from './economy.js';
+import {auctionMinimum,canContest,contestQuote,canBid} from './economy.js';
 export function PropertyActions({game,animating,dispatch,localId=0}){
  const tiles=getTiles(game),player=game.players[game.current],human=decisionPlayer(game)===localId,disabled=animating||!human;
  if(game.phase==='rent'){
@@ -14,6 +14,7 @@ export function PropertyActions({game,animating,dispatch,localId=0}){
   const o=game.offer,industry=tiles[o.tile].type==='industry';
   return <section className="property-actions" aria-label="收购请求"><div className="property-action-title"><Handshake size={20}/><div><h3>{game.players[o.buyer].name} 请求收购 {tiles[o.tile].name}</h3><p>报价 {money(o.price)} · 同意后转让产权，{industry?'免本次服务费':'本次免租'}</p></div></div>{human?<div className="property-buttons"><button className="text-button" disabled={disabled} onClick={()=>dispatch({type:'OFFER_REPLY',actor:localId,accept:false})}>拒绝收购</button><button className="primary" disabled={disabled} onClick={()=>dispatch({type:'OFFER_REPLY',actor:localId,accept:true})}>同意收购 {money(o.price)}</button></div>:<p>等待 {game.players[o.seller].name} 决定</p>}</section>;
  }
+ if(game.phase==='auction'&&game.auction.mode==='sealed')return <SealedAuction key={game.auction.id} game={game} animating={animating} dispatch={dispatch} localId={localId}/>;
  if(game.phase==='auction'){
   const a=game.auction,bidder=game.players[a.bidder],minimum=auctionMinimum(game);
   return <section className="property-actions auction-actions" aria-label="公开拍卖"><div className="property-action-title"><PixelEconomyIcon type="auction" size={28}/><div><h3>公开拍卖 · {tiles[a.tile].name}</h3><p>{a.highestBidder===null?`起拍价 ${money(a.minimum)}`:`最高出价 ${money(a.highestBid)} · ${game.players[a.highestBidder].name}`}</p></div></div><p>轮到 {bidder.name} · 现金 {money(bidder.cash)} · 仍在竞拍 {a.active.length} 人</p><p>每次至少加价 {money(a.increment)}，仅可用现金出价。放弃后退出本次拍卖；成交款交给银行。</p><div className="property-buttons"><button className="text-button" disabled={disabled} onClick={()=>dispatch({type:'AUCTION_PASS',actor:localId})}>放弃竞拍</button><button className="primary" disabled={disabled||bidder.cash<minimum} onClick={()=>dispatch({type:'AUCTION_BID',actor:localId,amount:minimum})}>出价 {money(minimum)}</button></div>{!human&&<small>等待 {bidder.name} 出价</small>}</section>;
@@ -24,7 +25,22 @@ export function PropertyActions({game,animating,dispatch,localId=0}){
  }
  if(game.phase==='debt'){
   const due=game.debt,available=ownedAssets(game,game.current),enough=player.cash>=due.amount;
-  return <section className="property-actions debt-actions" aria-label="银行抵押"><div className="property-action-title">{due.label.includes('经营费')?<PixelEconomyIcon type="operating" size={28}/>:<Landmark size={21}/>}<div><h3>待付 {money(due.amount)} · {due.label}</h3><p>现金 {money(player.cash)} · 缺口 {money(Math.max(0,due.amount-player.cash))}</p></div></div><p className="mortgage-rule">城市抵押款为原价的一半加实际升级支出；产业抵押款为原价的一半。银行代持期间不收费、不可购买，产业联动暂停。</p>{!enough&&available.length>0&&<div className="mortgage-list">{available.map(i=><button key={i} disabled={disabled} onClick={()=>dispatch({type:'MORTGAGE',tile:i})}><img src={tiles[i].asset} alt=""/><span><b>{tiles[i].name}</b><small>{tiles[i].type==='industry'?'公共事业':`${game.properties[i].level+1} 级城市`}</small></span><strong>抵押 {money(mortgageValue(game,i))}</strong></button>)}</div>}<div className="property-buttons">{enough?<button className="primary" disabled={disabled} onClick={()=>dispatch({type:'SETTLE_DEBT'})}>支付欠款 {money(due.amount)}</button>:!available.length?<button className="primary danger-button" disabled={disabled} onClick={()=>dispatch({type:'BANKRUPT'})}>确认破产</button>:null}</div>{!enough&&!available.length&&<p>已无可抵押资产。破产后城市和产业回到市场，城市等级归零。{game.economyVersion===1?'回流产权依次公开拍卖。':''}</p>}{!human&&<small>等待 {player.name} 处理</small>}</section>;
+  return <section className="property-actions debt-actions" aria-label="银行抵押"><div className="property-action-title">{due.label.includes('经营费')?<PixelEconomyIcon type="operating" size={28}/>:<Landmark size={21}/>}<div><h3>待付 {money(due.amount)} · {due.label}</h3><p>现金 {money(player.cash)} · 缺口 {money(Math.max(0,due.amount-player.cash))}</p></div></div><p className="mortgage-rule">城市抵押款为原价的一半加实际升级支出；产业抵押款为原价的一半。银行代持期间不收费、不可购买，产业联动暂停。</p>{!enough&&available.length>0&&<div className="mortgage-list">{available.map(i=><button key={i} disabled={disabled} onClick={()=>dispatch({type:'MORTGAGE',tile:i})}><img src={tiles[i].asset} alt=""/><span><b>{tiles[i].name}</b><small>{tiles[i].type==='industry'?'公共事业':`${game.properties[i].level+1} 级城市`}</small></span><strong>抵押 {money(mortgageValue(game,i))}</strong></button>)}</div>}<div className="property-buttons">{enough?<button className="primary" disabled={disabled} onClick={()=>dispatch({type:'SETTLE_DEBT'})}>支付欠款 {money(due.amount)}</button>:!available.length?<button className="primary danger-button" disabled={disabled} onClick={()=>dispatch({type:'BANKRUPT'})}>确认破产</button>:null}</div>{!enough&&!available.length&&<p>已无可抵押资产。破产后城市和产业回到市场，城市等级归零。{game.economyVersion===1?'回流产权依次密封拍卖。':''}</p>}{!human&&<small>等待 {player.name} 处理</small>}</section>;
  }
  return null;
+}
+
+function SealedAuction({game,animating,dispatch,localId}){
+ const a=game.auction,player=game.players[localId],eligible=a.active.includes(localId),submitted=a.submitted.includes(localId);
+ const [amount,setAmount]=useState(String(a.minimum));
+ const bid=Number(amount),valid=Number.isSafeInteger(bid)&&bid>=a.minimum&&bid<=player.cash;
+ const disabled=animating||!canBid(game,localId);
+ const own=Object.hasOwn(a,'ownBid')?a.ownBid:a.bids?.[localId];
+ const submit=type=>dispatch({type,actor:localId,auctionId:a.id,...(type==='AUCTION_BID'?{amount:bid}:{})});
+ return <section className="property-actions auction-actions" aria-label="密封拍卖"><div className="property-action-title"><PixelEconomyIcon type="auction" size={28}/><div><h3>密封拍卖 · {getTiles(game)[a.tile].name}</h3><p>底价 {money(a.minimum)} · 已提交 {a.submitted.length} / {a.active.length}</p></div></div><p>所有人同时报价，提交后不可修改；全部提交后公布，价高者得。最高价相同则随机抽签。</p><div className="sealed-status">{a.active.map(id=><span key={id}>{game.players[id].name} · {a.submitted.includes(id)?'已提交':'待提交'}</span>)}</div>{eligible&&!submitted?<><label className="sealed-bid-label">我的报价<input type="number" inputMode="numeric" min={a.minimum} max={player.cash} step="1" value={amount} disabled={disabled} onChange={e=>setAmount(e.target.value)}/></label><p>可用现金 {money(player.cash)} · 仅成交者付款给银行</p><div className="property-buttons"><button className="text-button" disabled={disabled} onClick={()=>submit('AUCTION_PASS')}>放弃竞拍</button><button className="primary" disabled={disabled||!valid} onClick={()=>submit('AUCTION_BID')}>提交保密报价</button></div></>:<p role="status">{submitted?`已提交${own===null?'放弃':own!==undefined?`：${money(own)}`:''}，等待统一揭晓。`:'本次不参与竞拍，等待揭晓。'}</p>}</section>;
+}
+export function AuctionResult({game}){
+ const result=game.lastAuctionResult;
+ if(!result)return null;
+ return <details className="sealed-result" key={result.id} open><summary>拍卖揭晓 · {result.name||getTiles(game)[result.tile]?.name}</summary><p>{result.winner===null?'全员放弃，本次流拍。':`${game.players[result.winner].name}以 ${money(result.amount)} 成交${result.tied.length>1?'（同价随机抽签）':''}`}</p><div>{result.bids.map(b=><p key={b.player}><span>{game.players[b.player].name}</span><b>{b.amount===null?'放弃':money(b.amount)}{b.player===result.winner?' · 成交':''}</b></p>)}</div></details>;
 }

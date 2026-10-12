@@ -15,4 +15,7 @@ export function canContest(s){
  const due=s.pendingRent,prop=s.properties[due?.tile];
  return hasEconomy(s)&&s.round>=ECONOMY.contestFrom&&s.phase==='rent'&&!!due&&!due.contested&&!!prop&&Number.isInteger(prop.owner)&&prop.owner===due.owner&&prop.owner!==s.current&&!s.players[prop.owner].bankrupt&&s.players[s.current].cash>=contestQuote(s,due.tile).price;
 }
-export const auctionMinimum = s => s.auction?s.auction.highestBid?s.auction.highestBid+s.auction.increment:s.auction.minimum:0;
+export const auctionMinimum = s => s.auction?s.auction.mode==='sealed'?s.auction.minimum:s.auction.highestBid?s.auction.highestBid+s.auction.increment:s.auction.minimum:0;
+
+export const pendingBidders = s => s.phase==='auction'&&s.auction?.mode==='sealed'?s.auction.active.filter(id=>!s.auction.submitted.includes(id)):[];
+export const canBid = (s,id) => pendingBidders(s).includes(id);

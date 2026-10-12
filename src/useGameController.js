@@ -1,6 +1,7 @@
 import {useState,useEffect,useRef,useCallback} from 'react';
 import {initialState,transition,aiAction,decisionPlayer} from './game.js';
 import {getEventCard} from './eventCards.js';
+import {pendingBidders} from './economy.js';
 import {getTiles} from './board.js';
 import {addPlayer,mergePendingPlayers,renamePlayer} from './players.js';
 import {applyAppearance} from './appearance.js';
@@ -15,6 +16,7 @@ export function useGameController(load,onTick,paused=false,remote=null){
  tick.current=onTick;
  const dispatch=useCallback(async (action,authoritative)=>{
   if(locked.current)return;
+  if(!authoritative&&['AUCTION_BID','AUCTION_PASS'].includes(action.type))action={...action,seed:Math.random()};
   const before=state.current,next=authoritative||transition(before,action);
   if(next===before)return;
   const token=epoch.current,isValid=()=>token===epoch.current;
@@ -75,7 +77,7 @@ export function useGameController(load,onTick,paused=false,remote=null){
  // Round settings apply immediately, even mid-animation (dispatch would be ignored while locked).
  const setRoundLimit=useCallback(limit=>{const next=transition(state.current,{type:'SET_ROUNDS',limit});if(next!==state.current){state.current=next;setGame(next);}},[]);
  const addCharacter=useCallback(profile=>{const result=addPlayer(state.current,profile);if(result.error)return result.error;state.current=result.state;setGame(result.state);return '';},[]);
- useEffect(()=>{if(remote||paused||(game.testRun&&!['offer','contest','auction'].includes(game.phase))||animating||decisionPlayer(game)===0||game.phase==='finished')return;const timer=setTimeout(()=>dispatch(aiAction(state.current)),game.phase==='event'?2200:['draw','event-destination','event-choice'].includes(game.phase)?1200:game.phase==='roll'?800:650);return()=>clearTimeout(timer);},[game,animating,dispatch,paused,!!remote]);
+ useEffect(()=>{const bidder=pendingBidders(game).find(id=>id!==0);if(remote||paused||(game.testRun&&!['offer','contest','auction'].includes(game.phase))||animating||(game.auction?.mode==='sealed'?bidder===undefined:decisionPlayer(game)===0)||game.phase==='finished')return;const timer=setTimeout(()=>{const next=structuredClone(state.current);if(next.auction?.mode==='sealed'){next.auction.active=[bidder,...next.auction.active.filter(id=>id!==bidder)];next.auction.bids={};}dispatch(aiAction(next));},game.phase==='event'?2200:['draw','event-destination','event-choice'].includes(game.phase)?1200:game.phase==='roll'?800:650);return()=>clearTimeout(timer);},[game,animating,dispatch,paused,!!remote]);
 
  const playbackVersion=useRef(remote?.room.version??0),queue=useRef([]),draining=useRef(false),generation=useRef(0);
  useEffect(()=>{

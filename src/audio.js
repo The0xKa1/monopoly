@@ -21,21 +21,21 @@ export function soundNotes(type,detail={}){
 }
 
 export function createGameAudio(){
- let context=null,master=null,enabled=false,disposed=false;
+ let context=null,master=null,enabled=false,disposed=false,volume=.7;
  const voices=new Set();
  function stop(){for(const o of voices){try{o.stop();}catch{}}voices.clear();}
- function enable(value){enabled=value;if(master)master.gain.setValueAtTime(value ? 0.7 : 0,context.currentTime);if(!value)stop();}
+ function enable(value){enabled=value;if(master)master.gain.setValueAtTime(value ? volume : 0,context.currentTime);if(!value)stop();}
  // Called directly by an interaction, before animation timers run (mobile Safari).
  function unlock(){
-  if(!enabled||disposed)return;
+  if(!enabled||!volume||disposed)return;
   try{
-   if(!context){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;context=new Audio();master=context.createGain();master.gain.value=.7;master.connect(context.destination);}
+   if(!context){const Audio=window.AudioContext||window.webkitAudioContext;if(!Audio)return;context=new Audio();master=context.createGain();master.gain.value=enabled?volume:0;master.connect(context.destination);}
    if(context.state==='suspended')context.resume().catch(()=>{});
   }catch{/* Sound is optional and must never interrupt a turn. */}
  }
  function play(type,detail={}){
   if(type==='cancel'){stop();return;}
-  if(!enabled||disposed||document.hidden||context?.state!=='running')return;
+  if(!enabled||!volume||disposed||document.hidden||context?.state!=='running')return;
   try{
    for(const n of soundNotes(type,detail)){
     const t=context.currentTime+n.delay,o=context.createOscillator(),g=context.createGain();
@@ -45,6 +45,7 @@ export function createGameAudio(){
    }
   }catch{/* An unavailable output device should not affect game state. */}
  }
+ function setVolume(value){volume=Math.max(0,Math.min(1,value));if(master)master.gain.setValueAtTime(enabled?volume:0,context.currentTime);if(!volume)stop();}
  function dispose(){disposed=true;stop();if(context&&context.state!=='closed')context.close().catch(()=>{});}
- return {enable,unlock,play,stop,dispose};
+ return {enable,setVolume,unlock,play,stop,dispose};
 }

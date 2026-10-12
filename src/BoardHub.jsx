@@ -1,6 +1,7 @@
-import React,{useState} from 'react';
+import React,{useState,useEffect} from 'react';
 import {ArrowRight,Coins,Dices,Shield,Hammer,Sparkles,ScrollText,Backpack} from 'lucide-react';
 import {CARDS,money,owned,ownedIndustries,season} from './game.js';
+import {AuctionResult} from './PropertyActions.jsx';
 import {PixelEconomyIcon} from './PixelEconomyIcon.jsx';
 import {startSupply,operatingFee} from './economy.js';
 import {getTiles} from './board.js';
@@ -19,9 +20,10 @@ function Transaction({entry,players}){
 }
 export function BoardHub({game,motion,mapMotion,finance,animating,onWallet,onCard,style,localId=0}){
  const [view,setView]=useState('activity'),tiles=getTiles(game),current=game.players[game.current],human=game.players[localId],climate=season(game),journal=game.journal||[];
+ useEffect(()=>{if(game.lastAuctionResult)setView('activity');},[game.lastAuctionResult?.id]);
  const latest=finance||journal.find(e=>e.kind==='transaction'),event=journal.find(e=>e.kind==='event');
  const cityEvent=(game.eventDraw?.source||game.activeEvent?.source)==='city-event';
- const status=game.phase==='finished'?'对局结束':mapMotion?'城市正在重排':finance?'正在结算':motion?.phase==='dice'?'正在掷骰':motion?.phase==='teleport'?'正在传送':motion?.phase==='walk'?`${motion.step} / ${motion.total} 步`:motion?.phase==='land'?'已抵达':({roll:'等待掷骰',buy:'等待购买',upgrade:'等待升级',end:'回合结束',rent:game.pendingRent?.kind==='industry'?'等待服务费 / 收购':'等待付租 / 收购',offer:'等待业主答复',contest:'等待产权争夺答复',auction:`等待 ${game.players[game.auction?.bidder]?.name||''} 竞拍`,debt:'等待抵押筹款',draw:cityEvent?'等待城市抽卡':'等待抽卡',event:cityEvent?'城市事件已揭晓':'事件已揭晓','event-destination':'选择目的地','event-choice':'选择事件结果'})[game.phase];
+ const status=game.phase==='finished'?'对局结束':mapMotion?'城市正在重排':finance?'正在结算':motion?.phase==='dice'?'正在掷骰':motion?.phase==='teleport'?'正在传送':motion?.phase==='walk'?`${motion.step} / ${motion.total} 步`:motion?.phase==='land'?'已抵达':({roll:'等待掷骰',buy:'等待购买',upgrade:'等待升级',end:'回合结束',rent:game.pendingRent?.kind==='industry'?'等待服务费 / 收购':'等待付租 / 收购',offer:'等待业主答复',contest:'等待产权争夺答复',auction:game.auction?.mode==='sealed'?'密封拍卖 · 等待提交':`等待 ${game.players[game.auction?.bidder]?.name||''} 竞拍`,debt:'等待抵押筹款',draw:cityEvent?'等待城市抽卡':'等待抽卡',event:cityEvent?'城市事件已揭晓':'事件已揭晓','event-destination':'选择目的地','event-choice':'选择事件结果'})[game.phase];
  const cardCount=Object.values(human.cards).reduce((a,b)=>a+b,0),blocked=animating||game.current!==localId||game.phase!=='roll';
  return <section className="board-center board-hub" aria-label="对局信息" style={style}><div className="hub-shell">
   <div className="activity-ribbon hub-actor" data-motion={motion?.phase||'idle'} style={{'--actor-color':current.color}}>
@@ -31,7 +33,7 @@ export function BoardHub({game,motion,mapMotion,finance,animating,onWallet,onCar
   </div>
   <div className="hub-tabs" role="group" aria-label="对局信息分类"><button aria-pressed={view==='activity'} onClick={()=>setView('activity')}><Sparkles size={13}/>动态</button><button aria-pressed={view==='news'} onClick={()=>setView('news')}><ScrollText size={13}/>公告</button><button aria-pressed={view==='cards'} aria-expanded={view==='cards'} aria-controls="item-cards" aria-label={view==='cards'?'收起道具':'展开道具'} onClick={()=>setView(view==='cards'?'activity':'cards')}><Backpack size={13}/>道具 <em>{cardCount}</em></button></div>
   <div className="hub-content" hidden={view!=='activity'}>
-   <div className="hub-overview">
+   <div className="hub-overview"><AuctionResult game={game}/>
     <div className="hub-season"><div><Sparkles size={13}/><b>{climate.name}</b><small>剩余 {4-(game.round-1)%4} 轮</small></div><p>{climate.desc}</p></div>
     {game.economyVersion===1&&<div className="hub-economy" aria-label="经营规则状态"><span><PixelEconomyIcon type="supply" size={16}/>当前起点补给 <b>{money(startSupply(game,!game.multiplayer&&game.current===0?1200:1000))}</b></span><span><PixelEconomyIcon type="operating" size={16}/>{game.round>40?`本轮经营费 ${money(operatingFee(game))} / 人`:`经营费第 41 轮开始 · ${money(200)} / 人`}</span><small>{game.round>40?`下一轮 ${money(operatingFee({...game,round:game.round+1}))} / 人`:'以后每轮增加 ¥200'}</small></div>}
     {(current.shield||current.subsidy||current.controlled||current.bankrupt)&&<div className="hub-buffs">{current.shield&&<span>租金护盾</span>}{current.subsidy&&<span>建设补贴</span>}{current.controlled&&<span>遥控骰子 {current.controlled} 步</span>}{current.bankrupt&&<span>已破产</span>}</div>}

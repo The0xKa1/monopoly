@@ -1,6 +1,5 @@
 import {DurableObject} from 'cloudflare:workers';
-import {newRoom,joinRoom,publicRoom,applyCommand,advanceAI,RoomError} from './room.js';
-import {decisionPlayer} from '../src/game.js';
+import {newRoom,joinRoom,publicRoom,applyCommand,advanceAI,automaticActor,RoomError} from './room.js';
 const json=(body,status=200)=>Response.json(body,{status,headers:{'Cache-Control':'no-store'}});
 const digest=async token=>Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(token)))).map(x=>x.toString(16).padStart(2,'0')).join('');
 const TTL=7*24*60*60*1000;
@@ -17,7 +16,7 @@ export class GameRoom extends DurableObject {
  snapshot(ws,extra={}){
   const key=ws.deserializeAttachment()?.key,seat=this.room?.seats.findIndex(s=>s.key===key);
   if(seat===undefined||seat<0){this.send(ws,{type:'error',error:'身份已失效',fatal:true});ws.close(4001,'身份已失效');return;}
-  this.send(ws,{type:'snapshot',seat,room:publicRoom(this.room,this.online()),...extra});
+  this.send(ws,{type:'snapshot',seat,room:publicRoom(this.room,this.online(),seat),...extra});
  }
  broadcast(extra={}){for(const ws of this.ctx.getWebSockets())if(ws.deserializeAttachment()?.key)this.snapshot(ws,extra);}
  async schedule(){
@@ -26,7 +25,7 @@ export class GameRoom extends DurableObject {
   const online=this.online();
   for(const ws of this.ctx.getWebSockets()){const a=ws.deserializeAttachment();if(!a?.key)time=Math.min(time,(a?.opened||Date.now())+15000);}
   if(this.room.status==='playing'&&online.length){
-   const seat=this.room.seats[decisionPlayer(this.room.game)];
+   const seat=this.room.seats[automaticActor(this.room)];
    time=Math.min(time,seat.kind==='ai'?Math.max(this.room.readyAt,Date.now()+500):this.room.deadline);
   }
   await this.ctx.storage.setAlarm(Math.max(Date.now()+100,time));
@@ -73,7 +72,7 @@ export class GameRoom extends DurableObject {
    ws.serializeAttachment({...attachment,last:now,count});if(count>12)throw new RoomError('操作过于频繁');
    if(input.type==='sync'){this.snapshot(ws,{reset:true});return;}
    const result=applyCommand(this.room,attachment.key,input);
-   if(!result.duplicate){this.save(result.room);this.broadcast({action:result.action?{type:result.action.type}:null,receipt:input.id});}
+   if(!result.duplicate){this.save(result.room);this.broadcast({action:result.action?{type:result.room.game?.auction?.mode==='sealed'&&['AUCTION_BID','AUCTION_PASS'].includes(result.action.type)?'AUCTION_SUBMIT':result.action.type}:null,receipt:input.id});}
    else this.snapshot(ws,{receipt:input.id});
    await this.schedule();
   }catch(e){this.send(ws,{type:'error',error:e instanceof RoomError?e.message:'操作未完成，请重试'});if(this.room)this.snapshot(ws);}
@@ -85,7 +84,7 @@ export class GameRoom extends DurableObject {
   if(!this.room)return;
   if(Date.now()>this.room.updated+TTL){for(const ws of this.ctx.getWebSockets())ws.close(4004,'房间已过期');this.ctx.storage.sql.exec('DELETE FROM room');this.room=null;return;}
   if(this.online().length){
-   const result=advanceAI(this.room);if(result.room!==this.room){this.save(result.room);this.broadcast({action:{type:result.action.type}});}
+   const result=advanceAI(this.room);if(result.room!==this.room){this.save(result.room);this.broadcast({action:{type:result.room.game?.auction?.mode==='sealed'&&['AUCTION_BID','AUCTION_PASS'].includes(result.action.type)?'AUCTION_SUBMIT':result.action.type}});}
   }
   await this.schedule();
  }
