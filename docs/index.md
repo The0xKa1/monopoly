@@ -1,7 +1,7 @@
 ---
 title: 项目文件索引
 form: index
-updated: 2026-09-29
+updated: 2026-10-12
 status: active
 tags: [files]
 ---
@@ -25,6 +25,22 @@ tags: [files]
 | [package-lock.json](../package-lock.json) | npm 依赖锁定版本 |
 | [.gitignore](../.gitignore) | 排除依赖、构建、索引、截图、系统文件与本地环境配置 |
 
+## 联机与部署
+| 路径 | 作用 |
+| --- | --- |
+| `src/NetworkApp.jsx` / `src/network.css` | 联机大厅、浏览器身份、重连/心跳、邀请与状态提示 |
+| `server/room.js` / `tests/multiplayer.test.js` | 房间纯逻辑、权限、版本去重、随机与超时 AI，以及规则测试 |
+| `server/worker.js` / `server/wrangler.jsonc` | SQLite 房间、休眠 WebSocket、alarm、请求频率限制及 DO 迁移 |
+| `functions/api/[[path]].js` / `wrangler.jsonc` | Pages 同源路由、外部 DO 绑定、请求校验 |
+| `public/_routes.json` / `public/_headers` | 仅 API 走 Functions，静态资源及安全响应头 |
+| `scripts/multiplayer-check.mjs` / `scripts/multiplayer-protocol-check.mjs` | 双浏览器联机、同步、重连与接口/隐私/AI 的本地和公网验收 |
+
+## 新局经济机制
+- `src/economy.js`：补给、拍卖、产权争夺及最终经营期参数/报价。
+- `src/PixelEconomyIcon.jsx` / `src/economy-fx.css`：原创像素图标与动画；检测在 gameFx.js，展示在 FxLayer.jsx。
+- `tests/economy*.test.js`：规则、联机权限、存档及动画信号；`scripts/economy-check.mjs` / `scripts/economy-fx-check.mjs`：交互和动画验收。
+- `scripts/economy-balance.mjs`：多种子离线AI模拟；结果和截图写入 `artifacts/economy-rebalance/`，不覆盖旧公网实战。
+
 ## 应用实现
 
 | 路径 | 作用 |
@@ -33,7 +49,8 @@ tags: [files]
 | [src/players.css](../src/players.css) | 横向名单、多人同格标记与昵称输入的响应式样式 |
 | [tests/players.test.js](../tests/players.test.js) | 20 人边界、回合轮转、破产跳过、重开、存档与完整对局模拟 |
 | [scripts/players-check.mjs](../scripts/players-check.mjs) | 新增、人数上限、移动中添加、20 人资产与 AI 行动检查 |
-| [src/game.js](../src/game.js) | 角色、季节、卡牌、城市/产业经济、升级、破产、结算与 AI 决策 |
+| [src/game.js](../src/game.js) | 角色、季节、卡牌、城市/产业经济、升级、破产与结算；转出 ai.js 的 aiAction |
+| [src/ai.js](../src/ai.js) / [tests/ai.test.js](../tests/ai.test.js) | 规则型 AI：动态现金缓冲、同色组、道具、收购应答、抵押/赎回、事件选择；及其测试 |
 | [src/industries.js](../src/industries.js) | 五类公共事业资料、价格、独立计费和联动公式 |
 | [src/IndustryDetails.jsx](../src/IndustryDetails.jsx) / [src/industries.css](../src/industries.css) | 产业详情、骰点/来客费用预览、联动状态与响应式场景 |
 | [tests/industry-mechanics.test.js](../tests/industry-mechanics.test.js) / [scripts/industries-check.mjs](../scripts/industries-check.mjs) | 产业产权、费用快照、联动断开/恢复、债务、存档和手机交互验证 |
@@ -65,12 +82,15 @@ tags: [files]
 | [src/BoardHub.jsx](../src/BoardHub.jsx) | 棋盘中心的当前人物、动态、收支公告、事件、自己的道具和回合记录 |
 | [src/board-hub.css](../src/board-hub.css) | 中央区域的尺寸适配、局部滚动、卡片和大地图吸附布局 |
 | [tests/journal.test.js](../tests/journal.test.js) | 收支公告持久化、无现金事件、条数上限和旧存档兼容 |
+| [tests/game-fx.test.js](../tests/game-fx.test.js) | 特效时刻识别：真实规则转换、地图重排忽略、破产与终局 |
 | [scripts/hub-check.mjs](../scripts/hub-check.mjs) | 中央信息、道具使用/锁定、公告刷新、事件及大地图操作验证 |
-| [src/MapEditor.jsx](../src/MapEditor.jsx) | 地图范围/大小、随机预览、取消与应用重开 |
+| [src/MapEditor.jsx](../src/MapEditor.jsx) | 地图范围/大小、对局轮数（数字/无限）、随机预览、只保存轮数或应用重开 |
 | [src/useBoardViewport.js](../src/useBoardViewport.js) / [src/BoardViewportControls.jsx](../src/BoardViewportControls.jsx) | 电脑可用画布测量、环形视觉布局、适应/缩放及局部滚动 |
 | [src/board-viewport.css](../src/board-viewport.css) | 全窗口棋盘、中央决策、固定操作栏与资产浮层；桌面专用 |
+| [src/readability.css](../src/readability.css) | 最后导入的可读性层：--fs-* 字号阶梯、次要文字对比度、地块文字随格子放大 |
 | [scripts/board-viewport-check.mjs](../scripts/board-viewport-check.mjs) | 电脑多尺寸全图可见、缩放/恢复、视觉路线、中央操作和手机回归 |
 | [src/map.css](../src/map.css) | 俯视棋盘、可变网格、地图设置与移动端滚动 |
+| [tests/rounds.test.js](../tests/rounds.test.js) | 自定义/无限轮数、旧存档默认 20、中途改轮数、立即结算与 AI 对局 |
 | [tests/maps.test.js](../tests/maps.test.js) | 范围/尺寸、路径、存档、动态地产经济和完整对局 |
 | [scripts/maps-check.mjs](../scripts/maps-check.mjs) | 换图、预览、图鉴、移动、购城、刷新与手机检查 |
 | [src/board.js](../src/board.js) | 经典索引、随机地图、cityOrder 重排与产权迁移、校验、色组及路径坐标 |
@@ -81,6 +101,8 @@ tags: [files]
 | [src/useGameController.js](../src/useGameController.js) | 逐格移动、到站提交、按决策人调度 AI、金币结算与动画取消 |
 | [src/audio.js](../src/audio.js) | Web Audio 原创合成音效、手势解锁、静音、取消与节点释放 |
 | [src/Effects.jsx](../src/Effects.jsx) | 金额滚动、金币飞行与交易双方提示 |
+| [src/gameFx.js](../src/gameFx.js) | 纯函数 detectFx：从一次提交的前后状态识别买地、收购、升级、收租、起点、换人、换季、破产、终局 |
+| [src/FxLayer.jsx](../src/FxLayer.jsx) / [src/fx.css](../src/fx.css) | 只读特效层、中央掷骰（DiceRoll）、像素烟花与结果领奖台；减弱动态时关闭 |
 | [src/appearance.js](../src/appearance.js) | 外观选项、数据校验、旧存档补全、纯 SVG 角色渲染 |
 | [src/PixelPlayer.jsx](../src/PixelPlayer.jsx) | 全局共用的动态角色头像与步行帧 |
 | [src/AppearanceEditor.jsx](../src/AppearanceEditor.jsx) | 分项外观编辑、随机组合、动作预览、保存与取消 |

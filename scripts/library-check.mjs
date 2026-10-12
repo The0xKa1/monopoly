@@ -8,7 +8,7 @@ try {
  const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
  page.on('pageerror',error=>errors.push(error.message));
  const loadVisibleCollection=()=>page.locator('.library-art img').evaluateAll(images=>Promise.all(images.map(image=>{image.loading='eager';return image.decode();})));
- await page.goto('http://localhost:5173');
+ await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
  const save=await page.evaluate(()=>localStorage.getItem('city-dice-v1'));
  await page.getByRole('button',{name:'城市图鉴',exact:true}).click();
  const cards=page.locator('.library-collection>button');
@@ -66,7 +66,7 @@ try {
  // Compact contact sheets make every landmark available for visual review.
  const sheet=await browser.newPage({viewport:{width:1280,height:1300}});
  for(const scope of ['china','world']) {
-  await sheet.goto('http://localhost:5173');
+  await sheet.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
   await sheet.evaluate(cities=>{
    document.head.innerHTML='<style>body{margin:0;padding:20px;background:#faf9f1;font-family:system-ui;color:#45614a}main{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}article{text-align:center;background:#edf2e2;border:1px solid #d9e2ce;border-radius:6px;padding:8px}img{width:128px;height:106px;object-fit:contain;image-rendering:pixelated}b{display:block;font-size:12px}small{display:block;font-size:9px;margin-top:5px;color:#819373}</style>';
    document.body.replaceChildren();const grid=document.createElement('main');document.body.append(grid);

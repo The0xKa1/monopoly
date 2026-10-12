@@ -9,7 +9,7 @@ mkdirSync('artifacts',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
- page.on('pageerror',e=>errors.push(e.message));await page.emulateMedia({reducedMotion:'reduce'});await page.goto('http://localhost:5173');
+ page.on('pageerror',e=>errors.push(e.message));await page.emulateMedia({reducedMotion:'reduce'});await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
  const state=()=>page.evaluate(key=>JSON.parse(localStorage.getItem(key)),SAVE);
  const seed=async s=>{await page.evaluate(({s,key,lab})=>{localStorage.removeItem(lab);localStorage.setItem(key,JSON.stringify(s));},{s,key:SAVE,lab:LAB_SAVE});await page.reload();await page.locator('.board').waitFor();};
  const phase=p=>page.waitForFunction(({p,key})=>JSON.parse(localStorage.getItem(key)).phase===p,{p,key:SAVE});

@@ -8,6 +8,15 @@ export function soundNotes(type,detail={}){
   const frequencies=detail.from===0?[1318.51,1174.66,987.77,783.99]:detail.to===0?[783.99,987.77,1174.66,1567.98]:[987.77,1318.51,1174.66,1567.98];
   return frequencies.flatMap((f,i)=>[note(f,i*.11,.18,.05,'sine'),note(f*2,i*.11,.07,.012,'sine')]);
  }
+ // Presentation effects (FxLayer): short motifs, all under ~0.9s.
+ if(type==='buy')return [note(110,0,.12,.09,'square',70),note(659.25,.08,.12,.04),note(987.77,.16,.22,.04)];
+ if(type==='upgrade')return [523.25,659.25,783.99,1046.5].map((f,i)=>note(f,i*.07,.16,.04,'square'));
+ if(type==='rent-big')return [note(98,0,.28,.12,'sawtooth',55),note(146.83,.02,.22,.05,'square',80)];
+ if(type==='start-bonus')return [783.99,987.77,1174.66,1567.98].map((f,i)=>note(f,i*.06,.14,.04,'triangle'));
+ if(type==='turn')return [note(587.33,0,.07,.025,'square'),note(880,.06,.1,.025,'square')];
+ if(type==='season')return [1046.5,1318.51,1567.98,2093].map((f,i)=>note(f,i*.12,.4,.025,'sine'));
+ if(type==='bankrupt')return [392,329.63,261.63,196].map((f,i)=>note(f,i*.16,.24,.05,'square',f*.92));
+ if(type==='fanfare')return [[523.25,0],[659.25,.12],[783.99,.24],[1046.5,.36],[783.99,.6],[1046.5,.72]].map(([f,d],i)=>note(f,d,i>4?.5:.14,.045,'square'));
  return [];
 }
 

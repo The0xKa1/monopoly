@@ -5,7 +5,7 @@ mkdirSync('artifacts',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
 const page=await browser.newPage({viewport:{width:1440,height:1050}});
 const errors=[];page.on('pageerror',e=>errors.push(e.message));
-await page.goto('http://localhost:5173',{waitUntil:'domcontentloaded'});
+await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`,{waitUntil:'domcontentloaded'});
 await page.getByRole('button',{name:'展开道具',exact:true}).click();
 await page.getByRole('button',{name:/遥控骰子/}).click();
 await page.getByRole('button',{name:'选择 1 点',exact:true}).click();

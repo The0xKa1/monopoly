@@ -11,7 +11,7 @@ import {SAVE,LAB_SAVE} from '../src/gameStorage.js';
 mkdirSync('artifacts',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try{
- const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.emulateMedia({reducedMotion:'reduce'});await page.goto('http://localhost:5173');
+ const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.emulateMedia({reducedMotion:'reduce'});await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
  const state=(key=SAVE)=>page.evaluate(key=>JSON.parse(localStorage.getItem(key)),key);
  const phase=(value,key=SAVE)=>page.waitForFunction(({key,value})=>JSON.parse(localStorage.getItem(key))?.phase===value,{key,value});
  const idle=()=>page.waitForFunction(()=>!document.querySelector('.transfer-toast,[aria-busy="true"],.map-shuffling-in,.map-shuffling-out,.walking,.teleporting'));

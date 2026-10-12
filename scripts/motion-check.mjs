@@ -7,7 +7,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:1080}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://localhost:5173');
+ await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
  const seed=async s=>{await page.evaluate(s=>localStorage.setItem('city-dice-v1',JSON.stringify(s)),s);await page.reload();};
  const state=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('city-dice-v1')));
  const idle=()=>page.waitForFunction(()=>document.querySelector('.activity-ribbon')?.dataset.motion==='idle'&&!document.querySelector('.transfer-toast'));

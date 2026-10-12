@@ -9,7 +9,7 @@ mkdirSync('artifacts',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
  const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
- await page.emulateMedia({reducedMotion:'reduce'});await page.goto('http://localhost:5173');
+ await page.emulateMedia({reducedMotion:'reduce'});await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
  const state=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('city-dice-v1')));
  const seed=async s=>{await page.evaluate(({s,labKey})=>{localStorage.removeItem(labKey);localStorage.setItem('city-dice-v1',JSON.stringify(s));},{s,labKey:LAB_SAVE});await page.reload();};
  const phase=p=>page.waitForFunction(p=>JSON.parse(localStorage.getItem('city-dice-v1')).phase===p,p);

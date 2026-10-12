@@ -1,10 +1,32 @@
 # monopoly
 
-像素风中国城市大富翁浏览器原型。React + Vite，游戏规则使用独立、纯 JavaScript 状态转换，后续可以复用到微信小游戏或小程序的逻辑层；当前界面是浏览器 DOM 实现。
+像素风中国城市大富翁，支持单机与多人联机。React + Vite，游戏规则使用独立、纯 JavaScript 状态转换，后续可以复用到微信小游戏或小程序的逻辑层；当前界面是浏览器 DOM 实现。
 
 仓库：[The0xKa1/monopoly](https://github.com/The0xKa1/monopoly)。
 
-## 启动与验证
+在线试玩：[monopoly](https://monopoly.the0xka1.cc)（[备用入口](https://monopoly-the0xka1.pages.dev)）。创建房间后分享邀请链接，所有真人准备后由房主开始。
+
+新局启用起点补给递减（第11轮减半、第21轮归零）、弃购/破产资产公开拍卖，以及第21轮起的产权争夺：收购价为常规报价150%，业主可向银行支付常规报价30%的防守费保留产权。第41轮起每人每轮经营费¥200，此后每轮增加¥200，现金不足进入抵押/破产流程。旧存档保留原规则，重新开局启用；规则参数见 `src/economy.js`。
+
+## 联机开发与部署
+
+采用 Cloudflare Pages + Pages Functions + SQLite Durable Objects。前后端均在 Cloudflare；自定义子域名通过外部 DNS CNAME 接入 Pages。
+
+```sh
+npm ci
+npm run dev:rooms    # 终端一：房间服务 8787
+npm run dev:online   # 终端二：网页 8788
+BASE_URL=http://localhost:8788 npm run test:online
+node scripts/multiplayer-protocol-check.mjs
+npm run deploy:rooms # 先部署 DO Worker
+npm run deploy:web   # 再发布 Pages
+```
+
+需要 Node.js 22+ 和已登录的 Wrangler。生产配置见两个 `wrangler.jsonc`；部署状态、DNS 与运维说明见 [交接](docs/handoff.md)。
+
+联机支持 2～20 个角色、AI、准备大厅、服务器结算、自动保存与重连。每次决策 120 秒，超时 AI 代行；所有人离线暂停，房间保留 7 天。身份绑定当前浏览器；尚无跨设备账号恢复、观战或中途加入。
+
+## 单机启动与验证
 
 ```sh
 npm install
@@ -29,7 +51,7 @@ node scripts/industries-check.mjs
 node scripts/board-viewport-check.mjs
 ```
 
-浏览器检查需要本机 Google Chrome，运行时保持开发服务启动。`dist/` 是构建产物，可放到静态服务器。
+单机访问 `http://localhost:5173/?local=1`。浏览器检查需要本机 Google Chrome 和开发服务，可用 `BASE_URL` 切换端口。`dist/` 为前端构建；联机还需要 Pages Functions 与 DO 绑定，不能只上传静态文件。
 
 ## 已完成
 
@@ -67,6 +89,7 @@ node scripts/board-viewport-check.mjs
 ## 文件
 
 - `src/game.js`：独立规则与状态转换，无 DOM、无框架依赖；随机数由调用者提供。
+- `src/ai.js`：AI 决策（纯函数），由 game.js 转出 `aiAction`。
 - `src/board.js`：随机地图、城市 ID 组装与路径坐标，经典图保留旧存档索引。
 - `src/industries.js` / `src/IndustryDetails.jsx` / `src/industries.css`：公共事业计价、联动、详情与预览，像素画由 `scripts/draw-industries.mjs` 生成。
 - `src/BoardHub.jsx` / `src/board-hub.css`：棋盘中央状态、公告、事件、道具与回合记录。
@@ -89,6 +112,6 @@ node scripts/board-viewport-check.mjs
 
 ## 原型边界
 
-当前是本地单人浏览器版本，没有微信登录、联机服务、排行榜、支付或小程序发布包，也没有提交微信审核。AI 使用简单的现金储备策略，暂不主动使用卡牌。下一阶段可以在确认玩法后选择微信小游戏 Canvas 渲染或小程序适配方案，再接入账号、服务端权威状态和联机房间。
+当前已支持浏览器多人联机与单机，没有微信登录、排行榜、支付或小程序发布包，未提交微信审核。AI 使用纯规则策略，不调用外部模型。联机由服务端统一执行规则与随机数；单机存档仍保存在浏览器，二者互不覆盖。
 
 资产来源及生成提示见 `public/assets/ASSETS.md`。标题字体 ZCOOL KuaiLe 使用 SIL Open Font License，许可证随字体提供。

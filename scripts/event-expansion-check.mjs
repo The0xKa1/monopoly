@@ -10,7 +10,7 @@ mkdirSync('artifacts',{recursive:true});
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try{
  const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];
- page.on('pageerror',error=>errors.push(error.message));await page.emulateMedia({reducedMotion:'reduce'});await page.goto('http://localhost:5173');
+ page.on('pageerror',error=>errors.push(error.message));await page.emulateMedia({reducedMotion:'reduce'});await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
  const original=initialState();original.phase='end';original.players[0].cash=8765;original.properties[1]={owner:0,level:2,upgradeSpent:345};
  await page.evaluate(({SAVE,LAB_SAVE,original})=>{localStorage.removeItem(LAB_SAVE);localStorage.setItem(SAVE,JSON.stringify(original));},{SAVE,LAB_SAVE,original});await page.reload();
  const saved=await page.evaluate(key=>localStorage.getItem(key),SAVE);

@@ -7,7 +7,7 @@ try{
  const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  const state=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('city-dice-v1')));
  const seed=async s=>{await page.evaluate(s=>localStorage.setItem('city-dice-v1',JSON.stringify(s)),s);await page.reload();};
- await page.goto('http://localhost:5173');await seed(initialState());
+ await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);await seed(initialState());
  assert.equal(await page.locator('.board-hub').count(),1);assert.equal(await page.locator('.backpack,.match-records').count(),0);assert.match(await page.locator('.hub-status').innerText(),/等待掷骰/);
  await page.getByRole('button',{name:'展开道具',exact:true}).click();assert.equal(await page.locator('#item-cards .strategy-card').count(),3);
  await page.screenshot({path:'artifacts/hub-cards-mobile.png',fullPage:true});

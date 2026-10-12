@@ -4,3 +4,11 @@
 @media(max-width:360px){.board{--cell-height:67px}.map-city-preview{grid-template-columns:repeat(3,minmax(0,1fr))}}
 .board .tile .city-sprite,.board .tile .station-sprite{height:calc(var(--cell-height) - 37px);max-width:95%;flex-shrink:0;margin-top:3px}.board .tile>b{max-width:100%;flex-shrink:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:0}.board .tile-price,.board .special-caption{flex-shrink:0;line-height:1.3}.board-scroll:has(.large-map){max-height:min(60dvh,580px)}
 @media(max-width:640px){.board-scroll:has(.large-map){max-height:min(47dvh,400px)}}
+.round-fields{display:flex;flex-wrap:wrap;align-items:flex-end;gap:8px 12px;margin-top:14px;text-align:left}
+.round-fields label{flex:0 0 120px;font-size:12px;color:#66725a}
+.round-fields input{display:block;width:100%;margin-top:8px;min-height:42px;border:1px solid #cfdbc1;border-radius:5px;background:#f7f9ee;color:#4e6e48;padding:6px 9px;font:inherit;font-size:15px}
+.round-fields input:disabled{color:#9aa58c;background:#eef1e6}
+.round-presets{display:flex;gap:6px;flex-wrap:wrap}
+.round-presets button{min-height:42px;min-width:44px;padding:0 10px;border:1px solid #cfdbc1;border-radius:5px;background:#f7f9ee;color:#4e6e48}
+.round-presets button.active{background:#3c775b;border-color:#3c775b;color:#fffdf0}
+.round-fields small{flex-basis:100%;font-size:12px;color:#66725a;line-height:1.5}

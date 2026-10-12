@@ -8,7 +8,7 @@ try{
  const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));
  const state=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('city-dice-v1')));
  const seed=async s=>{await page.evaluate(s=>localStorage.setItem('city-dice-v1',JSON.stringify(s)),s);await page.reload();};
- await page.goto('http://localhost:5173');await seed(initialState());
+ await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);await seed(initialState());
  await page.getByRole('button',{name:'新增角色',exact:true}).click();await page.getByLabel('昵称',{exact:true}).fill('小满');await page.getByRole('button',{name:'添加角色',exact:true}).click();
  assert.equal(await page.getByRole('alert').innerText(),'昵称已存在');assert.equal((await state()).players.length,4);
  await page.getByLabel('昵称',{exact:true}).fill('小麦');await page.getByRole('button',{name:'发型：长发',exact:true}).click();
