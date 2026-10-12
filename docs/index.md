@@ -28,7 +28,7 @@ tags: [files]
 ## 联机与部署
 | 路径 | 作用 |
 | --- | --- |
-| `src/NetworkApp.jsx` / `src/network.css` | 联机大厅、浏览器身份、重连/心跳、邀请与状态提示 |
+| `src/NetworkApp.jsx` / `src/network.css` | 像素城市大厅、准备卡片、浏览器身份、重连/心跳、邀请与状态提示 |
 | `server/room.js` / `tests/multiplayer.test.js` | 房间纯逻辑、权限、版本去重、随机与超时 AI，以及规则测试 |
 | `server/worker.js` / `server/wrangler.jsonc` | SQLite 房间、休眠 WebSocket、alarm、请求频率限制及 DO 迁移 |
 | `functions/api/[[path]].js` / `wrangler.jsonc` | Pages 同源路由、外部 DO 绑定、请求校验 |
@@ -99,7 +99,7 @@ tags: [files]
 | [src/city-library.css](../src/city-library.css) | 城市库和城市详情的桌面与手机样式 |
 | [src/main.jsx](../src/main.jsx) | React 入口、棋盘、图鉴、弹窗、骰子动画、音效、存档与 AI 调度 |
 | [src/useGameController.js](../src/useGameController.js) | 逐格移动、到站提交、按决策人调度 AI、金币结算与动画取消 |
-| [src/audio.js](../src/audio.js) | Web Audio 原创合成音效、手势解锁、静音、取消与节点释放 |
+| [src/audio.js](../src/audio.js) / `src/music.js` / `src/AudioSettings.jsx` / `src/audio-settings.css` | 音效/循环音乐引擎、阶段选曲、独立开关音量与跨界面设置弹窗 |
 | [src/Effects.jsx](../src/Effects.jsx) | 金额滚动、金币飞行与交易双方提示 |
 | [src/gameFx.js](../src/gameFx.js) | 纯函数 detectFx：从一次提交的前后状态识别买地、收购、升级、收租、起点、换人、换季、破产、终局 |
 | [src/FxLayer.jsx](../src/FxLayer.jsx) / [src/fx.css](../src/fx.css) | 只读特效层、中央掷骰（DiceRoll）、像素烟花与结果领奖台；减弱动态时关闭 |
@@ -123,6 +123,10 @@ tags: [files]
 | [scripts/city-art/pixel.mjs](../scripts/city-art/pixel.mjs) | 其余 76 城纯绘图模块，以城市 ID 为键，不自行写入文件 |
 | [scripts/library-check.mjs](../scripts/library-check.mjs) | 城市库筛选、搜索、全部资产加载、详情、存档隔离与手机验证 |
 | [scripts/appearance-check.mjs](../scripts/appearance-check.mjs) | 编辑/取消、刷新/重开、移动中保存、金币头像及手机验证 |
+
+- `scripts/synthesize-*.py`：原创音乐生成；`scripts/prepare-music.py` 重建四首已选循环母版到 `public/assets/music/`，带SHA-256清单。
+
+- `tests/music.test.js` / `scripts/music-check.mjs` / `scripts/audio-check.mjs`：设置迁移、切歌竞态、音量/静音、手势解锁、后台恢复、联机/单机选曲与声音输出验证。
 
 ## 资产与生成目录
 

@@ -20,7 +20,8 @@ import {getTiles,getGroups,validateMap,MAP_SCOPES} from './board.js';
 import {useGameController} from './useGameController.js';
 import {AnimatedMoney,MoneyEffects} from './Effects.jsx';
 import {FxLayer,Podium,DiceRoll} from './FxLayer.jsx';
-import {createGameAudio} from './audio.js';
+import {AudioProvider,AudioSettingsButton,useGameSound,useMusicScene} from './AudioSettings.jsx';
+import {gameplayMusic} from './music.js';
 import {CityLibrary, CatalogCityDetails} from './CityLibrary.jsx';
 import {PixelPlayer} from './PixelPlayer.jsx';
 import {AppearanceEditor} from './AppearanceEditor.jsx';
@@ -49,11 +50,11 @@ function Die({value=1,small=false}){const dots={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6
 
 function App({online=null,onHome}){
  const localId=online?.seat??0;
- const [tab,setTab]=useState('game'),[modal,setModal]=useState(null),[selected,setSelected]=useState(null),[sound,setSound]=useState(()=>{try{return localStorage.getItem('city-dice-sound')!=='off';}catch{return true;}}),[saved,setSaved]=useState(true),[wallet,setWallet]=useState(0),[playersOpen,setPlayersOpen]=useState(false),[participants,setParticipants]=useState([]),[catalogCity,setCatalogCity]=useState(null),[newCharacter,setNewCharacter]=useState(null);
- const audio=useRef(null),originalGame=useRef(null);
- useEffect(()=>{const engine=createGameAudio();audio.current=engine;engine.enable(sound);const unlock=()=>engine.unlock();const hidden=()=>{if(document.hidden)engine.stop();};window.addEventListener('pointerdown',unlock,{capture:true});window.addEventListener('keydown',unlock,{capture:true});document.addEventListener('visibilitychange',hidden);return()=>{window.removeEventListener('pointerdown',unlock,{capture:true});window.removeEventListener('keydown',unlock,{capture:true});document.removeEventListener('visibilitychange',hidden);engine.dispose();audio.current=null;};},[]);
- useEffect(()=>{audio.current?.enable(sound);try{localStorage.setItem('city-dice-sound',sound?'on':'off');}catch{}},[sound]);
+ const [tab,setTab]=useState('game'),[modal,setModal]=useState(null),[selected,setSelected]=useState(null),[saved,setSaved]=useState(true),[wallet,setWallet]=useState(0),[playersOpen,setPlayersOpen]=useState(false),[participants,setParticipants]=useState([]),[catalogCity,setCatalogCity]=useState(null),[newCharacter,setNewCharacter]=useState(null);
+ const originalGame=useRef(null);
+ const {playSound}=useGameSound();
  const {game,motion,mapMotion,animating,shownDice:displayDice,finance,dispatch,reset,replaceGame,updateAppearance,addCharacter,commit,renameCharacter,setRoundLimit}=useGameController(load,playSound,modal==='event-lab',online);
+ useMusicScene(gameplayMusic(game));
  const TILES=getTiles(game),GROUPS=getGroups(game),viewport=useBoardViewport(TILES.length,tab==='game'),{dimensions,position}=viewport,mapName=MAP_SCOPES[game.map?.kind||'classic'],cityEventCount=eligibleCityEventCards(game).length;
  const current=game.players[game.current],human=game.players[localId],rolling=motion?.phase==='dice',busy=game.current!==localId||animating||!!online?.blocked,climate=season(game);
  const shownPosition=id=>motion?.player===id?motion.at:game.players[id].pos;
@@ -76,8 +77,7 @@ function App({online=null,onHome}){
    if(left||top)frame.scrollBy({left,top,behavior});
   }else tile?.scrollIntoView({block:'nearest',inline:'nearest',behavior});
  },[motion?.at,modal,tab,viewport.desktop,viewport.zoom]);
- function playSound(type,detail){audio.current?.play(type,detail);}
- function toggleSound(){const next=!sound;audio.current?.enable(next);if(next)audio.current?.unlock();setSound(next);}
+
  function roll(){if(busy||game.phase!=='roll')return;dispatch({type:'ROLL',value:Math.floor(Math.random()*6)+1,eventSeed:Math.random()});}
  function startEventTest(id,variant='normal'){
   if(!game.testRun){originalGame.current=structuredClone(game);try{saveGame(localStorage,game);}catch{setSaved(false);}}
@@ -91,7 +91,7 @@ function App({online=null,onHome}){
  const special=(t,size=28)=>{const Icon=SPECIAL[t.type];return Icon?<Icon size={size} strokeWidth={1.7}/>:null;};
  const decision=['draw','event','event-destination','event-choice'].includes(game.phase)?<div id="event-panel"><EventCards localId={localId} game={game} animating={animating||!!online?.blocked} dispatch={dispatch}/></div>:['rent','offer','contest','auction','debt'].includes(game.phase)?<PropertyActions localId={localId} game={game} animating={animating||!!online?.blocked} dispatch={dispatch}/>:null;
  return <div className={`app-shell ${tab==='game'?'game-view':''}`}>
- <header className="topbar"><a className="brand" href="#" onClick={e=>{e.preventDefault();setTab('game');}}><span className="brand-icon"><DiceLogo/></span><span className="brand-name">monopoly</span></a><nav aria-label="主导航"><button className={tab==='game'?'nav-active':''} onClick={()=>setTab('game')}><Map size={17}/>城市棋盘</button><button className={tab==='album'?'nav-active':''} onClick={()=>setTab('album')}><BookOpen size={17}/>城市图鉴</button><button onClick={()=>setModal('rules')}><Compass size={17}/>游戏规则</button></nav><div className="header-actions"><span className="local-badge"><i/>{online?`联机 · ${human.name}`:`本地单人 · ${game.players.length-1} 位 AI`}</span><button className="icon-button" title={sound?'关闭音效':'开启音效'} aria-pressed={sound} aria-label={sound?'关闭音效':'开启音效'} onClick={toggleSound}>{sound?<Volume2 size={18}/>:<VolumeX size={18}/>}</button><button className="icon-button" disabled={!!online} aria-label="重新开始" onClick={()=>game.testRun?startEventTest(game.testRun.id,game.testRun.variant):setModal('restart')}><RotateCcw size={17}/></button></div></header>
+ <header className="topbar"><a className="brand" href="#" onClick={e=>{e.preventDefault();setTab('game');}}><span className="brand-icon"><DiceLogo/></span><span className="brand-name">monopoly</span></a><nav aria-label="主导航"><button className={tab==='game'?'nav-active':''} onClick={()=>setTab('game')}><Map size={17}/>城市棋盘</button><button className={tab==='album'?'nav-active':''} onClick={()=>setTab('album')}><BookOpen size={17}/>城市图鉴</button><button onClick={()=>setModal('rules')}><Compass size={17}/>游戏规则</button></nav><div className="header-actions"><span className="local-badge"><i/>{online?`联机 · ${human.name}`:`本地单人 · ${game.players.length-1} 位 AI`}</span><AudioSettingsButton/><button className="icon-button" disabled={!!online} aria-label="重新开始" onClick={()=>game.testRun?startEventTest(game.testRun.id,game.testRun.variant):setModal('restart')}><RotateCcw size={17}/></button></div></header>
  <main><div className="page-heading"><div><h1>{game.testRun?'事件卡测试':'当前对局'}</h1></div><div className="trip-progress"><span><span className="live-dot"/>{game.phase==='finished'?'已结束':'进行中'}</span><b>第 <strong>{String(game.round).padStart(2,'0')}</strong> / {Number.isFinite(roundLimit(game))?roundLimit(game):'∞'} 轮</b></div></div>
  <div className="game-layout"><aside className="sidebar"><section className="travelers panel"><div className="roster-bar"><button className="fold-toggle" aria-expanded={playersOpen} aria-controls="player-details" aria-label={playersOpen?'收起玩家资产':'展开玩家资产'} onClick={()=>setPlayersOpen(!playersOpen)}>玩家<ChevronDown size={15}/></button><div className="roster-strip">{game.players.map((p,i)=><button key={i} className={`roster-person ${game.current===i?'current':''}`} aria-label={`查看${p.name}的资产`} onClick={()=>openWallet(i)} style={{'--player-color':p.color}}><PixelPlayer player={game.players[i]} id={i}/><span>{p.name}</span></button>)}</div><button disabled={!!online} className="roster-edit" aria-label="编辑我的昵称与外观" onClick={()=>{setWallet(localId);setModal('appearance');}}>外观</button><button className="roster-add" aria-label="新增角色" disabled={!!online||!!game.testRun||game.players.length>=MAX_PLAYERS||game.phase==='finished'} onClick={()=>{setNewCharacter({name:nextPlayerName(game.players),appearance:randomAppearance()});setModal('add-player');}}>＋<span>新增</span><small>{game.players.length}/{MAX_PLAYERS}</small></button></div><div id="player-details" className="player-details" hidden={!playersOpen}>{game.players.map((p,i)=>{const change=finance?.to===i?finance.amount:finance?.from===i?-finance.amount:0;return <div key={i} data-player={i} className={`player-card ${game.current===i?'active':''} ${p.bankrupt?'bankrupt':''} ${change>0?'cash-gain':change<0?'cash-loss':''}`} style={{'--player-color':p.color}}><button className="player-main player-open" aria-label={`查看${p.name}的资产`} onClick={()=>openWallet(i)}><div className="avatar"><PixelPlayer player={game.players[i]} id={i}/></div><div className="player-identity"><h3>{p.name}</h3></div>{game.current===i&&<span className="turn-dot"/>}</button><div className="player-money" data-wallet={i}><span className="cash-label">可用现金</span><b><AnimatedMoney value={p.cash}/></b>{!!change&&<span key={finance.key} className={`cash-delta ${change>0?'positive':'negative'}`}>{change>0?'+':'−'}{money(Math.abs(change))}</span>}</div><div className="asset-breakdown"><span>产权净值 <b>{money(propertyEquity(game,i))}</b></span><span>总资产 <strong><AnimatedMoney value={worth(game,i)}/></strong></span></div><button className="wallet-button" onClick={()=>openWallet(i)}><Building2 size={12}/>{holdings(game,i).filter(k=>TILES[k].type==='city').length} 座城市 · {holdings(game,i).filter(k=>TILES[k].type==='industry').length} 项产业<span>资产明细 <ChevronRight size={11}/></span></button></div>})}</div></section></aside>
 
@@ -134,4 +134,4 @@ function App({online=null,onHome}){
  </div>;
 }
 function DiceLogo(){return <svg viewBox="0 0 30 30" fill="none"><path d="M5 2H25V5H28V25H25V28H5V25H2V5H5Z" fill="#37735a"/><path d="M7 7H12V12H7ZM18 7H23V12H18ZM12.5 12.5H17.5V17.5H12.5ZM7 18H12V23H7ZM18 18H23V23H18Z" fill="#f8f2df"/></svg>}
-createRoot(document.getElementById('root')).render(<NetworkApp Game={App}/>);
+createRoot(document.getElementById('root')).render(<AudioProvider><NetworkApp Game={App}/></AudioProvider>);

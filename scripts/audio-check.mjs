@@ -6,6 +6,7 @@ try{
  const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
  await page.addInitScript(()=>{
+  if(!localStorage.getItem('monopoly-audio-v1'))localStorage.setItem('monopoly-audio-v1',JSON.stringify({musicEnabled:false,effectsEnabled:localStorage.getItem('city-dice-sound')!=='off',effectsVolume:70,musicVolume:45}));
   window.audioProbe={notes:[],contexts:[]};const Native=window.AudioContext;
   window.AudioContext=class extends Native{
    constructor(...a){super(...a);window.audioProbe.contexts.push(this);this.probe=this.createAnalyser();this.probe.fftSize=256;}
@@ -16,7 +17,8 @@ try{
  await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
  const seed=async s=>{await page.evaluate(s=>localStorage.setItem('city-dice-v1',JSON.stringify(s)),s);await page.reload();};
  let s=initialState();s.players[0].controlled=1;await seed(s);
- assert.equal(await page.getByRole('button',{name:'关闭音效',exact:true}).isVisible(),true);
+ assert.equal(await page.getByRole('button',{name:'音频设置',exact:true}).isVisible(),true);
+ const setEffects=async enabled=>{await page.getByRole('button',{name:'音频设置',exact:true}).click();await page.getByRole('checkbox',{name:/^音效/}).setChecked(enabled);await page.getByRole('button',{name:'关闭音频设置'}).click();};
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
  assert.equal(await page.evaluate(()=>audioProbe.contexts.length),0,'no audio context until user gesture');
  await page.getByRole('button',{name:/掷骰子/}).click();
@@ -28,17 +30,17 @@ try{
  const debit=await page.evaluate(()=>audioProbe.notes.filter(n=>n.wave==='sine').map(n=>n.frequency));
  assert.equal(debit.length,8);assert.ok(debit[0]>debit[6],'spend sound falls');
  const peak=await page.evaluate(async()=>{let peak=0;const ctx=audioProbe.contexts[0],data=new Float32Array(ctx.probe.fftSize);for(let i=0;i<10;i++){ctx.probe.getFloatTimeDomainData(data);peak=Math.max(peak,...data.map(Math.abs));await new Promise(r=>setTimeout(r,15));}return peak;});assert.ok(peak>.001&&peak<.5,`audible, bounded signal ${peak}`);
- await page.getByRole('button',{name:'关闭音效',exact:true}).click();
+ await setEffects(false);
  assert.equal(await page.evaluate(()=>audioProbe.contexts[0].master.gain.value),0);
- await page.reload();assert.equal(await page.getByRole('button',{name:'开启音效',exact:true}).isVisible(),true);
+ await page.reload();assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('monopoly-audio-v1')).effectsEnabled),false);
  s=initialState();s.players[0].controlled=2;await seed(s);await page.getByRole('button',{name:/掷骰子/}).click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('city-dice-v1')).players[0].pos===2);
  assert.equal(await page.evaluate(()=>audioProbe.notes.length),0,'muted actions never create notes');
  s=initialState();s.players[0].pos=19;s.players[0].controlled=1;await seed(s);
- await page.getByRole('button',{name:'开启音效',exact:true}).click();
+ await setEffects(true);
  await page.getByRole('button',{name:/掷骰子/}).click();await page.locator('.transfer-toast').waitFor();
  const credit=await page.evaluate(()=>audioProbe.notes.filter(n=>n.wave==='sine').map(n=>n.frequency));assert.equal(credit.length,8);assert.ok(credit[0]<credit[6],'income sound rises');
- await page.getByRole('button',{name:'关闭音效',exact:true}).click();
+ await setEffects(false);
  await page.waitForTimeout(80);
  assert.equal(await page.evaluate(()=>{const ctx=audioProbe.contexts[0],data=new Float32Array(256);ctx.probe.getFloatTimeDomainData(data);return Math.max(...data.map(Math.abs));}),0,'mute silences pending coin notes');
  assert.deepEqual(errors,[]);

@@ -1,0 +1,26 @@
+[
+  {
+    "file": "lobby.wav",
+    "seconds": 41.739125,
+    "bytes": 5342652,
+    "sha256": "bded1de1f6e4503b88bf101efbb32dd0c2bb43e92af36a907311a63b0b0ac8b6"
+  },
+  {
+    "file": "ready.wav",
+    "seconds": 36.9230625,
+    "bytes": 4726196,
+    "sha256": "8468ad22ce8701d7cfbfbb05e33cf41cc13a79d00e8a2dddc843d4f83e193d49"
+  },
+  {
+    "file": "playing.wav",
+    "seconds": 68.5714375,
+    "bytes": 8777188,
+    "sha256": "6be88887ff0eecf31186b1f71d72fcd6ffae510d7c6369aa8ccc77291c42c1b9"
+  },
+  {
+    "file": "late.wav",
+    "seconds": 48.0,
+    "bytes": 6144044,
+    "sha256": "ffa0d4e213cb5402f5ef4f924398eb5c2f8093a7eb908b05af77d2321724d9b1"
+  }
+]
