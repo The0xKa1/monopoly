@@ -4,10 +4,13 @@ import {PixelPlayer} from './PixelPlayer.jsx';
 import {season,money,worth} from './game.js';
 import {getTiles} from './board.js';
 import {detectFx} from './gameFx.js';
+import {PixelEconomyIcon} from './PixelEconomyIcon.jsx';
+import './economy-fx.css';
 
 // Presentation-only overlay. It reads committed state changes and draws short,
 // non-blocking effects above the board; it never dispatches game actions.
-const DURATION={item:1500,buy:1300,takeover:1300,upgrade:1500,rent:1200,'start-bonus':1500,turn:1150,season:3400,bankrupt:2000,finale:5200};
+const ECONOMY_TYPES=['auction','auction-bid','auction-sale','contest','contest-sale','defense','operating','supply'];
+const DURATION={...Object.fromEntries(ECONOMY_TYPES.map(type=>[type,1800])),item:1500,buy:1300,takeover:1300,upgrade:1500,rent:1200,'start-bonus':1500,turn:1150,season:3400,bankrupt:2000,finale:5200};
 const SEASON_ICONS=[Flower2,Sun,Leaf,Snowflake];
 const reducedMotion=()=>typeof window!=='undefined'&&window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 const rand=(a,b)=>a+Math.random()*(b-a);
@@ -24,7 +27,7 @@ function burst(n,{spread=90,lift=70,fall=60,colors}){
 }
 const particleStyle=p=>({'--dx':`${p.dx}px`,'--dy':`${p.dy}px`,'--fall':`${p.fall}px`,'--rot':`${p.rot}deg`,'--c':p.c,'--delay':`${p.delay}ms`,'--s':p.s});
 
-export function FxLayer({commit,game,play,onFinale}){
+export function FxLayer({commit,game,play,onFinale,localId=0}){
  const [items,setItems]=useState([]),seen=useRef(0),timers=useRef(new Set());
  useEffect(()=>()=>{timers.current.forEach(clearTimeout);timers.current.clear();},[]);
  const later=(fn,ms)=>{const t=setTimeout(()=>{timers.current.delete(t);fn();},ms);timers.current.add(t);};
@@ -34,15 +37,24 @@ export function FxLayer({commit,game,play,onFinale}){
   if(!list.length)return;
   if(reducedMotion()){const finale=list.find(f=>f.type==='finale');if(finale)later(()=>onFinale?.(),300);return;}
   const state=commit.next,tiles=getTiles(state),spawned=[];
+  // A bankruptcy auction can close, open the next lot and charge the next
+  // player's fee in one commit. Keep one receipt; all entries remain in logs.
+  const receiptPriority=['operating','contest-sale','auction-sale','defense','supply','auction-bid','contest','auction'];
+  const receipt=receiptPriority.map(type=>list.find(f=>f.type===type)).find(Boolean);
   list.forEach((fx,order)=>{
+   if(ECONOMY_TYPES.includes(fx.type)&&fx!==receipt)return;
    const id=`${commit.seq}-${order}`,color=typeof fx.player==='number'?state.players[fx.player]?.color:'#d2ab57';
    const item={...fx,id,color};
-   if(['buy','takeover','upgrade','rent','start-bonus'].includes(fx.type)){
+   if(ECONOMY_TYPES.includes(fx.type)){
+    item.board=boardRect();item.tileName=tiles[fx.tile]?.name;
+    // A separate lower board receipt avoids the turn/season banner above it.
+    if(fx.type.endsWith('-sale'))play?.('buy');
+   }else if(['buy','takeover','upgrade','rent','start-bonus'].includes(fx.type)){
     item.rect=tileRect(fx.tile);if(!item.rect)return;
     const el=document.querySelector(`.board [data-tile="${fx.tile}"]`);
     if(fx.type==='buy'||fx.type==='takeover'){item.parts=burst(26,{spread:item.rect.w*1.1,lift:item.rect.h*.5,fall:item.rect.h*.6,colors:[color,'#f3c75b','#fffdf0',color,'#5d9c78']});bump(el,[{transform:'scale(1)'},{transform:'scale(1.08) translateY(-4px)'},{transform:'scale(.98)'},{transform:'scale(1)'}],{duration:520,delay:150,easing:'ease-out'});play?.('buy');}
     if(fx.type==='upgrade'){item.parts=Array.from({length:12},()=>({x:rand(.1,.9),delay:rand(0,500),rise:rand(.8,1.5),s:rand(.7,1.3)}));bump(el,[{transform:'translateY(0)'},{transform:'translateY(-10px) scale(1.06)'},{transform:'translateY(0) scale(1)'}],{duration:620,delay:220,easing:'cubic-bezier(.2,1.6,.4,1)'});play?.('upgrade');}
-    if(fx.type==='rent'){item.big=fx.big&&(fx.from===0||fx.to===0);item.parts=burst(item.big?20:12,{spread:item.rect.w*(item.big?1.3:.9),lift:item.rect.h*.4,fall:item.rect.h*.8,colors:['#f3c75b','#e0a93a','#f8e39a']});item.board=boardRect();
+    if(fx.type==='rent'){item.big=fx.big&&(fx.from===localId||fx.to===localId);item.parts=burst(item.big?20:12,{spread:item.rect.w*(item.big?1.3:.9),lift:item.rect.h*.4,fall:item.rect.h*.8,colors:['#f3c75b','#e0a93a','#f8e39a']});item.board=boardRect();
      // Only shake for rent the local player pays or receives; AI-to-AI rent stays calm.
      if(item.big){const b=document.querySelector('.board');bump(b,[{translate:'0 0'},{translate:'-3px 1px'},{translate:'3px -1px'},{translate:'-2px 0'},{translate:'0 0'}],{duration:300,delay:80});play?.('rent-big');}}
     if(fx.type==='start-bonus'){item.parts=burst(16,{spread:item.rect.w,lift:item.rect.h*.6,fall:item.rect.h*.5,colors:['#f3c75b','#5d9c78','#fffdf0','#d79456']});play?.('start-bonus');}
@@ -66,15 +78,21 @@ export function FxLayer({commit,game,play,onFinale}){
    spawned.push(item);
   });
   if(!spawned.length)return;
-  setItems(current=>[...current,...spawned]);
+  setItems(current=>[...current.filter(item=>!receipt||!ECONOMY_TYPES.includes(item.type)),...spawned]);
   spawned.forEach(item=>later(()=>setItems(current=>current.filter(x=>x.id!==item.id)),(item.delay||0)+DURATION[item.type]));
  },[commit]);
  if(!items.length)return null;
- return <div className="fx-layer" aria-hidden="true">{items.map(item=><Fx key={item.id} item={item} game={game}/>)}</div>;
+ return <div className="fx-layer" aria-hidden="true">{items.map(item=><Fx key={item.id} item={item} game={game} localId={localId}/>)}</div>;
 }
 
-function Fx({item,game}){
+function Fx({item,game,localId}){
  const players=game.players;
+ if(ECONOMY_TYPES.includes(item.type)){
+  const icon=item.type.startsWith('auction')?'auction':['contest','contest-sale','defense'].includes(item.type)?'contest':item.type;
+  const title={auction:'公开拍卖','auction-bid':'竞价已更新','auction-sale':'拍卖成交',contest:'产权争夺','contest-sale':'产权已转让',defense:'已保留产权',operating:'经营费已支付',supply:item.round>=21?'起点补给结束':'起点补给减半'}[item.type];
+  const detail=[players[item.player]?.name,item.tileName,item.amount!==undefined?money(item.amount):null].filter(Boolean).join(' · ');
+  return <div className={`fx-economy fx-economy-${item.type}`} style={{left:Math.max(160,Math.min(innerWidth-160,item.board.x+item.board.w/2)),top:Math.min(innerHeight-80,item.board.y+item.board.h*.68)}}><PixelEconomyIcon type={icon} size={40}/><span><b>{title}</b>{detail&&<small>{detail}</small>}</span></div>;
+ }
  switch(item.type){
   case 'buy':case 'takeover':return <div className="fx-tile fx-buy" style={{...box(item.rect),'--owner':item.color}}>
    <span className="fx-flash"/><span className="fx-ring"/><span className="fx-ring fx-ring-late"/>
@@ -95,7 +113,7 @@ function Fx({item,game}){
    return <div className="fx-item" style={{left:item.focus.x+item.focus.w/2,top:item.focus.y,'--owner':item.color}}><span><Icon size={18}/></span><b>{label}{item.value?` · ${item.value} 点`:''}</b><small>{players[item.player]?.name}</small></div>;}
   case 'turn':{const p=players[item.player];if(!p)return null;
    return <div className="fx-turn" style={{left:item.board.x+item.board.w/2,top:item.board.y+Math.min(item.board.h*.28,150),'--owner':p.color,'--delay':`${item.delay||0}ms`}}>
-    <span className="fx-turn-avatar"><PixelPlayer player={p} id={item.player}/></span><b>{item.player===0?'你的回合':`${p.name}的回合`}</b><small>第 {item.round} 轮</small></div>;}
+    <span className="fx-turn-avatar"><PixelPlayer player={p} id={item.player}/></span><b>{item.player===localId?'你的回合':`${p.name}的回合`}</b><small>第 {item.round} 轮</small></div>;}
   case 'season':{const Icon=SEASON_ICONS[item.index]||Sun;
    return <><div className={`fx-season fx-season-${item.index}`} style={box(item.board)}>
     {item.parts.map((p,i)=><i key={i} className="fx-flake" style={{left:`${p.x*100}%`,'--delay':`${p.delay}ms`,'--dur':`${p.dur}ms`,'--sway':`${p.sway}px`,'--s':p.s,'--rot':`${p.rot}deg`,'--h':`${item.board.h}px`}}/>)}

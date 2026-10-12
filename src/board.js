@@ -10,7 +10,7 @@ function city(cityId) {
 }
 function industry(industryId){const definition=getIndustry(industryId);return Object.freeze({...definition,type:'industry',industryId,desc:definition.rule});}
 export const TILES = [
- {type:'start',name:'旅程起点',desc:'每次经过获得 ¥1,000；小满额外获得 ¥200'},
+ {type:'start',name:'旅程起点',desc:'经过时按本局规则与当前轮数领取补给'},
  city('beijing'),
  {type:'chance',name:'奇遇',desc:'抽取一张特殊事件卡，揭示后执行卡面效果'},
  city('xian'),

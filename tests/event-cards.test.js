@@ -77,7 +77,7 @@ test('bankruptcy distributes only remaining cash with deterministic integer rema
  const initial=initialState();initial.players[0].cash=1000;initial.properties[3]={owner:'bank',mortgagor:0,mortgageAmount:800,level:0};
  const before=resolve('park_proposal',{state:initial}),state=act(before,'BANKRUPT');
  assert.equal(state.players[0].bankrupt,true);assert.deepEqual(cash(state),[0,12334,12333,12333]);assert.equal(totalCash(state),totalCash(before));assert.equal(state.properties[3],undefined);assert.equal(state.debt,undefined);
- assert.deepEqual(state.transactions.map(entry=>entry.amount),[334,333,333]);assertLedger(before,state);assert.equal(state.journal[0].category,'bankruptcy');assert.equal(act(state,'BANKRUPT'),state);
+ assert.deepEqual(state.transactions.map(entry=>entry.amount),[334,333,333]);assertLedger(before,state);assert.equal(state.journal.find(entry=>entry.category==='bankruptcy').category,'bankruptcy');assert.equal(state.phase,'auction');assert.equal(act(state,'BANKRUPT'),state);
 });
 
 test('a zero-cash gift bankruptcy never invents a bank payment',()=>{

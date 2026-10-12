@@ -11,3 +11,6 @@ artifacts/
 *.log
 playwright-report/
 test-results/
+.wrangler/
+.dev.vars
+.dev.vars.*

@@ -2,6 +2,7 @@
 // Every action returned here must be accepted by transition(); otherwise the
 // UI would stall, so each branch re-checks the reducer's own preconditions.
 import {getTiles} from './board.js';
+import {startSupply,operatingFee,canContest,contestQuote,auctionMinimum} from './economy.js';
 import {rent,upgradeCost,purchaseQuote,mortgageValue,ownedAssets,mortgaged,getIndustryQuote,canRedeem,season,owned,roundLimit} from './game.js';
 import {eventDestinations,eventChoices} from './eventOptions.js';
 import {getEventCard} from './eventCards.js';
@@ -20,7 +21,7 @@ export function projectedRent(s, i, owner, level = s.properties[i]?.level || 0) 
   const tiles = getTiles(s), t = tiles[i];
   if (t.type !== 'city') return 0;
   const combo = groupOf(tiles, i).every(j => j === i || ownerOf(s, j) === owner);
-  return Math.round(t.price * .16 * (level + 1) * (combo ? 1.5 : 1) * (season(s).group === t.group ? 1.3 : 1) * (owner === 2 ? 1.15 : 1));
+  return Math.round(t.price * .16 * (level + 1) * (combo ? 1.5 : 1) * (season(s).group === t.group ? 1.3 : 1) * (!s.multiplayer && owner === 2 ? 1.15 : 1));
 }
 
 // Expected rent income per round from one tile: each active opponent lands on
@@ -48,7 +49,7 @@ export function reserve(s, id, from = s.players[id].pos) {
   const {expected, max} = exposure(s, id, from);
   const liquid = ownedAssets(s, id).length ? 0 : 400;
   const late = s.round >= roundLimit(s) - 1 ? .6 : 1;
-  return Math.round(Math.max(TUNE.minReserve, (expected + TUNE.maxWeight * max) * late) + liquid);
+  return Math.round(Math.max(TUNE.minReserve, (expected + TUNE.maxWeight * max) * late) + liquid + operatingFee({...s,round:s.round+1}));
 }
 
 const completesGroup = (s, i, id) => {
@@ -98,7 +99,7 @@ function landingScore(s, id, to, steps, cashAfterStart) {
 }
 
 function bestDiceChoice(s, id) {
-  const p = s.players[id], n = getTiles(s).length, bonus = id === 0 ? 1200 : 1000;
+  const p = s.players[id], n = getTiles(s).length, bonus = startSupply(s, !s.multiplayer && id === 0 ? 1200 : 1000);
   const scores = [1, 2, 3, 4, 5, 6].map(k => {
     const to = (p.pos + k) % n, passes = p.pos + k >= n;
     return landingScore(s, id, to, k, p.cash + (passes ? bonus : 0)) + (passes ? bonus : 0);
@@ -145,6 +146,11 @@ export function sellerAccepts(s, seller, tile, buyer) {
 
 function rentPhase(s, id) {
   const due = s.pendingRent, p = s.players[id];
+  if (canContest(s)) {
+    const quote = contestQuote(s, due.tile);
+    const strategic = completesGroup(s, due.tile, id) || blocksGroup(s, due.tile, id);
+    if (p.cash - quote.price >= reserve(s, id) && (strategic || due.amount >= quote.price * .2)) return {type:'CONTEST'};
+  }
   if (!due.offerRejected && due.owner !== 'bank') {
     const quote = purchaseQuote(s, due.tile);
     const affordable = p.cash >= quote && p.cash - quote >= reserve(s, id) * TUNE.offer;
@@ -271,6 +277,19 @@ function chooseEvent(s, id, random) {
 
 export function aiAction(s, random = Math.random) {
   const tiles = getTiles(s), id = s.current, p = s.players[id];
+  if (s.phase === 'auction') {
+    const bidder = s.auction.bidder, tile = s.auction.tile, amount = auctionMinimum(s);
+    const strategic = completesGroup(s, tile, bidder) || blocksGroup(s, tile, bidder);
+    const cap = purchaseQuote(s, tile) * (strategic ? 1.25 : 1);
+    return amount <= cap && s.players[bidder].cash - amount >= reserve(s, bidder)
+      ? {type:'AUCTION_BID',actor:bidder,amount}
+      : {type:'AUCTION_PASS',actor:bidder};
+  }
+  if (s.phase === 'contest') {
+    const {seller,tile,defenseFee} = s.contest;
+    const defend = s.players[seller].cash >= defenseFee && s.players[seller].cash - defenseFee >= reserve(s,seller) && holdingValue(s,tile,seller) > defenseFee;
+    return {type:'CONTEST_REPLY',actor:seller,accept:!defend};
+  }
   if (s.phase === 'draw') {
     const choices = s.eventDraw.offerIds.map((id, index) => ({index, card: getEventCard(id)})).filter(option => option.card);
     const selected = selectBest(choices, option => eventValue(s, id, option.card), random);

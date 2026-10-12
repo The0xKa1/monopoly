@@ -7,7 +7,7 @@ import {eventDestinations} from '../src/eventOptions.js';
 import {SAVE,LAB_SAVE} from '../src/gameStorage.js';
 const browser=await chromium.launch({channel:'chrome',headless:true});
 try{
- const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.emulateMedia({reducedMotion:'reduce'});await page.goto('http://localhost:5173');
+ const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];page.on('pageerror',e=>errors.push(e.message));await page.emulateMedia({reducedMotion:'reduce'});await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
  const original=initialState(undefined,generateMap('world',36,()=>.4));original.players[0].cash=9631;original.properties[1]={owner:0,level:2,upgradeSpent:1500};original.phase='end';
  await page.evaluate(({original,SAVE,LAB_SAVE})=>{localStorage.removeItem(LAB_SAVE);localStorage.setItem(SAVE,JSON.stringify(original));},{original,SAVE,LAB_SAVE});await page.reload();
  const saved=await page.evaluate(key=>localStorage.getItem(key),SAVE),lab=()=>page.evaluate(key=>JSON.parse(localStorage.getItem(key)),LAB_SAVE);

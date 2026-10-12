@@ -35,4 +35,4 @@ export function renamePlayer(state,id,name){
  const error=playerNameError(trimmed,state.players.filter((_,i)=>i!==id));if(error)return {error};
  return {state:{...state,players:state.players.map((p,i)=>i===id?{...p,name:trimmed}:p)}};
 }
-export function validRosterSave(state){return state?.version===1&&Array.isArray(state.players)&&state.players.length>=4&&state.players.length<=MAX_PLAYERS&&Number.isInteger(state.current)&&state.current>=0&&state.current<state.players.length&&['roll','buy','upgrade','rent','offer','debt','draw','event','event-destination','event-choice','end','finished'].includes(state.phase);}
+export function validRosterSave(state){return state?.version===1&&Array.isArray(state.players)&&state.players.length>=4&&state.players.length<=MAX_PLAYERS&&Number.isInteger(state.current)&&state.current>=0&&state.current<state.players.length&&['roll','buy','upgrade','rent','offer','auction','contest','debt','draw','event','event-destination','event-choice','end','finished'].includes(state.phase);}

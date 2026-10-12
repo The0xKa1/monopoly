@@ -1,7 +1,7 @@
 ---
 title: 项目文件索引
 form: index
-updated: 2026-10-07
+updated: 2026-10-12
 status: active
 tags: [files]
 ---
@@ -24,6 +24,22 @@ tags: [files]
 | [package.json](../package.json) | 依赖及开发、构建、测试命令 |
 | [package-lock.json](../package-lock.json) | npm 依赖锁定版本 |
 | [.gitignore](../.gitignore) | 排除依赖、构建、索引、截图、系统文件与本地环境配置 |
+
+## 联机与部署
+| 路径 | 作用 |
+| --- | --- |
+| `src/NetworkApp.jsx` / `src/network.css` | 联机大厅、浏览器身份、重连/心跳、邀请与状态提示 |
+| `server/room.js` / `tests/multiplayer.test.js` | 房间纯逻辑、权限、版本去重、随机与超时 AI，以及规则测试 |
+| `server/worker.js` / `server/wrangler.jsonc` | SQLite 房间、休眠 WebSocket、alarm、请求频率限制及 DO 迁移 |
+| `functions/api/[[path]].js` / `wrangler.jsonc` | Pages 同源路由、外部 DO 绑定、请求校验 |
+| `public/_routes.json` / `public/_headers` | 仅 API 走 Functions，静态资源及安全响应头 |
+| `scripts/multiplayer-check.mjs` / `scripts/multiplayer-protocol-check.mjs` | 双浏览器联机、同步、重连与接口/隐私/AI 的本地和公网验收 |
+
+## 新局经济机制
+- `src/economy.js`：补给、拍卖、产权争夺及最终经营期参数/报价。
+- `src/PixelEconomyIcon.jsx` / `src/economy-fx.css`：原创像素图标与动画；检测在 gameFx.js，展示在 FxLayer.jsx。
+- `tests/economy*.test.js`：规则、联机权限、存档及动画信号；`scripts/economy-check.mjs` / `scripts/economy-fx-check.mjs`：交互和动画验收。
+- `scripts/economy-balance.mjs`：多种子离线AI模拟；结果和截图写入 `artifacts/economy-rebalance/`，不覆盖旧公网实战。
 
 ## 应用实现
 

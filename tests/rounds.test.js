@@ -16,7 +16,8 @@ test('default and old saves keep 20 rounds; a custom limit ends the game after t
 test('unlimited games never end on rounds and survive a save round-trip',()=>{
  let s=initialState(undefined,undefined,undefined,{roundLimit:null});assert.equal(roundLimit(s),Infinity);
  s=JSON.parse(JSON.stringify(s));assert.equal(s.roundLimit,null);assert.equal(roundLimit(s),Infinity);
- s=lastTurn(s);s.round=250;s=act(s,'END');assert.equal(s.phase,'roll');assert.equal(s.round,251);
+ s=lastTurn(s);s.round=250;s=act(s,'END');assert.equal(s.phase,'debt');assert.equal(s.debt.amount,42200);assert.equal(s.round,251);
+ const legacy=initialState(undefined,undefined,undefined,{roundLimit:null});delete legacy.economyVersion;legacy.round=250;assert.equal(act(lastTurn(legacy),'END').phase,'roll');
 });
 
 test('rounds can change mid-game, never below the current round; settle ends on the human turn',()=>{

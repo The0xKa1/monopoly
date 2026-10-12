@@ -4,6 +4,7 @@ import {getTiles,getGroups,validateMap,CLASSIC_MAP,shuffleCityMap} from './board
 import {EVENT_CARDS,getEventCard,eligibleEventCards,eligibleCityEventCards} from './eventCards.js';
 import {eventDestinations,eventChoices} from './eventOptions.js';
 import {quoteIndustry} from './industries.js';
+import {ECONOMY,hasEconomy,startSupply,operatingFee,contestQuote,canContest,auctionMinimum} from './economy.js';
 export {TILES,GROUPS} from './board.js';
 export const CARDS = {
  dice:{name:'遥控骰子',desc:'指定下一次移动步数',detail:'指定下一次骰子点数：1～6。'},
@@ -35,7 +36,7 @@ export const propertyEquity = (s,id) => holdings(s,id).reduce((sum,i)=>sum+prope
 export const worth = (s,id) => s.players[id].cash+propertyEquity(s,id)-(s.debt&&s.current===id?s.debt.amount:0);
 export const ownerName = (s,prop) => prop?.owner==='bank'?'城市银行':s.players[prop?.owner]?.name||'无';
 export const ownerColor = (s,prop) => prop?.owner==='bank'?'#98a29b':s.players[prop?.owner]?.color||'transparent';
-export const decisionPlayer = s => s.phase==='offer'?s.offer?.seller:s.current;
+export const decisionPlayer = s => s.phase==='offer'?s.offer?.seller:s.phase==='auction'?s.auction?.bidder:s.phase==='contest'?s.contest?.seller:s.current;
 export const canRedeem = (s,index,id) => s.current===id&&['roll','end'].includes(s.phase)&&s.properties[index]?.owner==='bank'&&s.properties[index]?.mortgagor===id&&s.players[id].cash>=s.properties[index].mortgageAmount;
 // Pricing stays pure so the detail panel can preview dice and visitors. Only
 // active properties count; the queried company is a hypothetical new purchase
@@ -48,7 +49,7 @@ export function getIndustryQuote(s,index,visitor=s.current,owner=s.properties[in
  return owner==='bank'?{...quote,amount:0,basis:'银行代持，暂停收费与产业联动。',bonuses:[],links:quote.links.map(link=>({...link,active:false}))}:quote;
 }
 export const money = n => '¥ '+n.toLocaleString('en-US');
-export function initialState(roster,map=CLASSIC_MAP,eventDeck,options={}){return migrateAppearances({version:1,map:validateMap(map),...(Array.isArray(eventDeck)?{eventDeck:[...eventDeck]}:{}),roundLimit:normalizeRounds(options.roundLimit),round:1,current:0,phase:'roll',dice:1,lastDice:1,players:roster?roster.map(createPlayer):[
+export function initialState(roster,map=CLASSIC_MAP,eventDeck,options={}){return migrateAppearances({version:1,economyVersion:1,map:validateMap(map),...(Array.isArray(eventDeck)?{eventDeck:[...eventDeck]}:{}),roundLimit:normalizeRounds(options.roundLimit),round:1,current:0,phase:'roll',dice:1,lastDice:1,players:roster?roster.map(createPlayer):[
  {name:'小满',role:'旅行家',ability:'经过起点额外获得 ¥200',color:'#518c6c',cash:12000,pos:0,cards:{dice:2,shield:1,build:1}},
  {name:'阿橙',role:'建筑师',ability:'城市升级费用减少 20%',color:'#d79456',cash:12000,pos:0,cards:{dice:0,shield:0,build:0}},
  {name:'小紫',role:'投资人',ability:'收取城市租金增加 15%',color:'#9a81b5',cash:12000,pos:0,cards:{dice:0,shield:0,build:0}},
@@ -56,8 +57,8 @@ export function initialState(roster,map=CLASSIC_MAP,eventDeck,options={}){return
 ],properties:{},journal:[],logs:[{text:'对局开始，每位玩家初始现金 ¥12,000。',round:1}],notice:'等待掷骰。',winner:null});}
 export function transfer(s,from,to,amount,label){if(amount<=0)return;if(typeof from==='number')s.players[from].cash-=amount;if(typeof to==='number')s.players[to].cash+=amount;s.transactions.push({from,to,amount,label});s.journal=[{kind:'transaction',round:s.round,from,to,amount,label},...(s.journal||[])].slice(0,40);}
 function log(s,text,kind,meta={}){if(kind==='event')s.journal=[{kind,round:s.round,text,...meta},...(s.journal||[])].slice(0,40);s.logs.unshift({text,round:s.round});s.logs=s.logs.slice(0,60);s.notice=text;}
-export function rent(s,index){const TILES=getTiles(s);const t=TILES[index],p=s.properties[index];if(!p||p.owner==='bank')return 0;if(t.type==='industry')return getIndustryQuote(s,index).amount;const set=TILES.map((x,i)=>x.type==='city'&&x.group===t.group?i:-1).filter(i=>i>=0);const combo=set.every(i=>s.properties[i]?.owner===p.owner);return Math.round(t.price*.16*(p.level+1)*(combo?1.5:1)*(season(s).group===t.group?1.3:1)*(p.owner===2?1.15:1));}
-export function upgradeCost(s,index){const TILES=getTiles(s);if(TILES[index].type!=='city')return 0;return Math.max(0,Math.round(TILES[index].price*.5*(s.current===1?.8:1))-(s.players[s.current].subsidy?600:0));}
+export function rent(s,index){const TILES=getTiles(s);const t=TILES[index],p=s.properties[index];if(!p||p.owner==='bank')return 0;if(t.type==='industry')return getIndustryQuote(s,index).amount;const set=TILES.map((x,i)=>x.type==='city'&&x.group===t.group?i:-1).filter(i=>i>=0);const combo=set.every(i=>s.properties[i]?.owner===p.owner);return Math.round(t.price*.16*(p.level+1)*(combo?1.5:1)*(season(s).group===t.group?1.3:1)*(!s.multiplayer&&p.owner===2?1.15:1));}
+export function upgradeCost(s,index){const TILES=getTiles(s);if(TILES[index].type!=='city')return 0;return Math.max(0,Math.round(TILES[index].price*.5*(!s.multiplayer&&s.current===1?.8:1))-(s.players[s.current].subsidy?600:0));}
 function finish(s){s.phase='finished';s.winner=s.players.map((p,i)=>({id:i,worth:worth(s,i)})).filter(p=>!s.players[p.id].bankrupt).sort((a,b)=>b.worth-a.worth)[0].id;log(s,`${s.players[s.winner].name}以 ${money(worth(s,s.winner))} 总资产获胜。`);}
 // Obligations stay pending until cash is available. Creditors never receive
 // money that the debtor has not paid, and mortgages never sell a property.
@@ -74,7 +75,7 @@ function charge(s,to,amount,label,payments){
 }
 function arriveCity(s){
  const p=s.players[s.current],tile=getTiles(s)[p.pos],prop=s.properties[p.pos];s.phase='end';
- if(!prop){s.phase=p.cash>=tile.price?'buy':'end';s.notice=`抵达${tile.name}，${p.cash>=tile.price?'可购买。':'现金不足，暂时无法购买。'}`;}
+ if(!prop){s.phase=hasEconomy(s)||p.cash>=tile.price?'buy':'end';s.notice=`抵达${tile.name}，${p.cash>=tile.price?'可购买。':'现金不足，暂时无法购买。'}`;}
  else if(prop.owner==='bank')s.notice=`${tile.name}由银行代持，免租且不可购买。`;
  else if(prop.owner===s.current){s.phase=prop.level<3&&p.cash>=upgradeCost(s,p.pos)?'upgrade':'end';s.notice=`${tile.name} · ${prop.level<3?'可升级。':'已满级。'}`;}
  else if(p.shield){p.shield=false;log(s,`${p.name}的租金护盾生效，免付${tile.name}租金。`,'event');}
@@ -82,7 +83,7 @@ function arriveCity(s){
 }
 function arriveIndustry(s){
  const p=s.players[s.current],tile=getTiles(s)[p.pos],prop=s.properties[p.pos];s.phase='end';
- if(!prop){s.phase=p.cash>=tile.price?'buy':'end';s.notice=`抵达${tile.name}，${p.cash>=tile.price?'可购买。':'现金不足，暂时无法购买。'}`;}
+ if(!prop){s.phase=hasEconomy(s)||p.cash>=tile.price?'buy':'end';s.notice=`抵达${tile.name}，${p.cash>=tile.price?'可购买。':'现金不足，暂时无法购买。'}`;}
  else if(prop.owner==='bank')s.notice=`${tile.name}由银行代持，暂停收费、交易与产业联动。`;
  else if(prop.owner===s.current)s.notice=`${tile.name}为自己持有，无需支付服务费。`;
  else{const pricing=getIndustryQuote(s,p.pos);s.pendingRent={tile:p.pos,owner:prop.owner,amount:pricing.amount,offerRejected:false,kind:'industry',pricing};s.phase='rent';s.notice=`${tile.name} · 支付服务费前可提出收购。`;}
@@ -113,13 +114,42 @@ function bankrupt(s){
  for(const i of released)delete s.properties[i];
  delete s.debt;delete s.pendingRent;delete s.offer;s.phase='end';
  log(s,`${p.name}破产。${released.length?released.map(i=>tiles[i].name).join('、')+'重新进入市场，城市等级归零。':'无资产回流。'}${unpaid?`未付 ${money(unpaid)} 不再追偿。`:''}`,'event',{category:'bankruptcy',player:id,released});
+ if(hasEconomy(s)){if(s.players.filter(x=>!x.bankrupt).length<=1)finish(s);else if(released.length)startAuctions(s,released,'advance');else advanceTurn(s);}
+}
+// A fee belongs to the new turn, before any roll or discretionary redemption.
+function advanceTurn(s){
+ if(s.players.filter(x=>!x.bankrupt).length<=1){finish(s);return;}
+ do{s.current=(s.current+1)%s.players.length;if(s.current===0)s.round++;}while(s.players[s.current].bankrupt);
+ const limit=roundLimit(s);if(s.round>limit){s.round=limit;finish(s);return;}
+ s.phase='roll';const fee=operatingFee(s);
+ if(fee){charge(s,'bank',fee,'最终经营期 · 经营费');if(s.phase==='debt')s.debt.resume='roll';else s.phase='roll';}
+}
+function startAuctions(s,tiles,resume){
+ s.auctionQueue={tiles:[...tiles],resume};nextAuction(s);
+}
+function nextAuction(s){
+ const queue=s.auctionQueue,tile=queue.tiles.shift();
+ if(tile===undefined){const resume=queue.resume;delete s.auctionQueue;delete s.auction;s.phase='end';if(resume==='advance')advanceTurn(s);return;}
+ const active=s.players.map((p,id)=>p.bankrupt?null:id).filter(id=>id!==null);
+ s.auction={tile,active,bidder:active[0],highestBid:0,highestBidder:null,minimum:Math.ceil(getTiles(s)[tile].price*ECONOMY.auctionRate),increment:ECONOMY.auctionIncrement};
+ s.phase='auction';log(s,`${getTiles(s)[tile].name}公开拍卖，起拍价 ${money(s.auction.minimum)}。`,'event');
+}
+function continueAuction(s,actor){
+ const auction=s.auction;
+ const challengers=auction.active.filter(id=>id!==auction.highestBidder);
+ if(!challengers.length){
+  if(auction.highestBidder!==null){transfer(s,auction.highestBidder,'bank',auction.highestBid,`拍卖${getTiles(s)[auction.tile].name}`);s.properties[auction.tile]={owner:auction.highestBidder,level:0};log(s,`${s.players[auction.highestBidder].name}以 ${money(auction.highestBid)} 拍得${getTiles(s)[auction.tile].name}。`,'event');}
+  else log(s,`${getTiles(s)[auction.tile].name}流拍，仍为无主资产。`,'event');
+  nextAuction(s);return;
+ }
+ for(let n=1;n<=s.players.length;n++){const id=(actor+n)%s.players.length;if(challengers.includes(id)){auction.bidder=id;break;}}
 }
 export function transition(state,action){const s=structuredClone(state);const TILES=getTiles(s);const p=s.players[s.current];if(s.phase==='finished')return state;s.transactions=[];
  switch(action.type){
  case 'CARD':{if(s.phase!=='roll'||(action.actor??0)!==s.current||!CARDS[action.card]||!p.cards[action.card])return state;if(action.card==='shield'&&p.shield||action.card==='build'&&p.subsidy||action.card==='dice'&&p.controlled)return state;
  if(action.card==='dice'){if(!Number.isInteger(action.value)||action.value<1||action.value>6)return state;p.controlled=action.value;}
  if(action.card==='shield')p.shield=true;if(action.card==='build')p.subsidy=true;p.cards[action.card]--;log(s,`${p.name}使用了${CARDS[action.card].name}${action.card==='dice'?`，下一次前进 ${action.value} 步`:''}。`);break;}
- case 'ROLL':{if(s.phase!=='roll'||!Number.isInteger(action.value)||action.value<1||action.value>6)return state;const steps=p.controlled||action.value;delete p.controlled;s.dice=steps;s.lastDice=steps;const next=p.pos+steps;if(next>=TILES.length){const bonus=s.current===0?1200:1000;transfer(s,'bank',s.current,bonus,'经过起点 · 旅途补给');log(s,`${p.name}经过起点，获得 ${money(bonus)}。`);}p.pos=next%TILES.length;const tile=TILES[p.pos];s.phase='end';log(s,`${p.name}掷出 ${steps} 点，抵达${tile.name}。`);
+ case 'ROLL':{if(s.phase!=='roll'||!Number.isInteger(action.value)||action.value<1||action.value>6)return state;const steps=p.controlled||action.value;delete p.controlled;s.dice=steps;s.lastDice=steps;const next=p.pos+steps;if(next>=TILES.length){const bonus=startSupply(s,!s.multiplayer&&s.current===0?1200:1000);transfer(s,'bank',s.current,bonus,'经过起点 · 旅途补给');log(s,`${p.name}经过起点，获得 ${money(bonus)}。`);}p.pos=next%TILES.length;const tile=TILES[p.pos];s.phase='end';log(s,`${p.name}掷出 ${steps} 点，抵达${tile.name}。`);
  if(tile.type==='city')arriveCity(s);
  else if(tile.type==='industry')arriveIndustry(s);
  else if(tile.type==='chance')drawOptions(s,'chance',action.eventSeed??(action.event??0)/4);
@@ -215,6 +245,25 @@ export function transition(state,action){const s=structuredClone(state);const TI
  }
  case 'BUY':{if(s.phase!=='buy'||!['city','industry'].includes(TILES[p.pos].type)||s.properties[p.pos]||p.cash<TILES[p.pos].price)return state;transfer(s,s.current,'bank',TILES[p.pos].price,`购买${TILES[p.pos].name}`);s.properties[p.pos]={owner:s.current,level:0};s.phase='end';log(s,`${p.name}购买${TILES[p.pos].name}。`);break;}
  case 'UPGRADE':{if(s.phase!=='upgrade'||TILES[p.pos].type!=='city')return state;const prop=s.properties[p.pos];if(!prop||prop.owner!==s.current||prop.level>=3)return state;const cost=upgradeCost(s,p.pos);if(p.cash<cost)return state;transfer(s,s.current,'bank',cost,`升级${TILES[p.pos].name}`);prop.upgradeSpent=upgradeSpent(s,p.pos)+cost;p.subsidy=false;prop.level++;s.phase='end';log(s,`${p.name}花费 ${money(cost)} 将${TILES[p.pos].name}升至 ${prop.level+1} 级。`);break;}
+ case 'AUCTION_BID':{
+  const a=s.auction;if(s.phase!=='auction'||!a||action.actor!==a.bidder||!a.active.includes(action.actor)||s.players[action.actor].bankrupt||!Number.isSafeInteger(action.amount)||action.amount<auctionMinimum(s)||action.amount>s.players[action.actor].cash)return state;
+  a.highestBid=action.amount;a.highestBidder=action.actor;log(s,`${s.players[action.actor].name}出价 ${money(action.amount)}。`,'event');continueAuction(s,action.actor);break;
+ }
+ case 'AUCTION_PASS':{
+  const a=s.auction;if(s.phase!=='auction'||!a||action.actor!==a.bidder||!a.active.includes(action.actor))return state;
+  a.active=a.active.filter(id=>id!==action.actor);log(s,`${s.players[action.actor].name}退出本次拍卖。`,'event');continueAuction(s,action.actor);break;
+ }
+ case 'CONTEST':{
+  if(!canContest(s))return state;const due=s.pendingRent;
+  s.contest={tile:due.tile,buyer:s.current,seller:due.owner,...contestQuote(s,due.tile)};s.phase='contest';
+  log(s,`${p.name}发起${TILES[due.tile].name}产权争夺，报价 ${money(s.contest.price)}。`,'event');break;
+ }
+ case 'CONTEST_REPLY':{
+  const c=s.contest,prop=s.properties[c?.tile];if(s.phase!=='contest'||!c||action.actor!==c.seller||typeof action.accept!=='boolean'||!prop||prop.owner!==c.seller||s.players[c.seller].bankrupt)return state;
+  if(action.accept){if(p.cash<c.price)return state;transfer(s,c.buyer,c.seller,c.price,`争夺收购${TILES[c.tile].name}`);prop.owner=c.buyer;delete s.pendingRent;s.phase='end';log(s,`${p.name}取得${TILES[c.tile].name}，免付本次到站费用。`,'event');}
+  else{if(s.players[c.seller].cash<c.defenseFee)return state;transfer(s,c.seller,'bank',c.defenseFee,`保留${TILES[c.tile].name}产权`);s.pendingRent.contested=true;s.pendingRent.offerRejected=true;s.phase='rent';log(s,`${s.players[c.seller].name}支付 ${money(c.defenseFee)} 保留产权，来访者继续支付到站费用。`,'event');}
+  delete s.contest;break;
+ }
  case 'OFFER':{
   const due=s.pendingRent,prop=s.properties[due?.tile];
   if(s.phase!=='rent'||!due||due.offerRejected||!prop||prop.owner==='bank'||prop.owner!==due.owner||p.cash<purchaseQuote(s,due.tile))return state;
@@ -240,7 +289,7 @@ export function transition(state,action){const s=structuredClone(state);const TI
  }
  case 'SETTLE_DEBT':{
   if(s.phase!=='debt'||!s.debt||p.cash<s.debt.amount)return state;
-  const due=s.debt;delete s.debt;charge(s,due.to,due.amount,due.label,due.payments);break;
+  const due=s.debt;delete s.debt;charge(s,due.to,due.amount,due.label,due.payments);if(due.resume==='roll')s.phase='roll';break;
  }
  case 'BANKRUPT':{
   if(s.phase!=='debt'||!s.debt||p.cash>=s.debt.amount||ownedAssets(s,s.current).length)return state;
@@ -252,7 +301,7 @@ export function transition(state,action){const s=structuredClone(state);const TI
   transfer(s,s.current,'bank',amount,`赎回${TILES[i].name}`);prop.owner=s.current;delete prop.mortgagor;delete prop.mortgageAmount;
   log(s,`${p.name}赎回${TILES[i].name}，恢复产权与${TILES[i].type==='industry'?'收费、产业联动':'收租'}。`,'event');break;
  }
- case 'END':{if(!['end','buy','upgrade'].includes(s.phase))return state;if(s.players.filter(x=>!x.bankrupt).length<=1){finish(s);break;}do{s.current=(s.current+1)%s.players.length;if(s.current===0)s.round++;}while(s.players[s.current].bankrupt);const limit=roundLimit(s);if(s.round>limit){s.round=limit;finish(s);}else s.phase='roll';break;}
+ case 'END':{if(!['end','buy','upgrade'].includes(s.phase))return state;if(s.phase==='buy'&&hasEconomy(s)){startAuctions(s,[p.pos],'end');break;}advanceTurn(s);break;}
  case 'SET_ROUNDS':{if(!(action.limit===null||Number.isInteger(action.limit)&&action.limit>=1&&action.limit<=MAX_ROUNDS))return state;const next=action.limit===null?null:Math.max(s.round,action.limit);if(next===(s.roundLimit===undefined?DEFAULT_ROUNDS:s.roundLimit))return state;s.roundLimit=next;log(s,next===null?'对局改为无限轮。':`对局改为 ${next} 轮。`);break;}
  case 'SETTLE':{if(!['roll','end'].includes(s.phase)||s.current!==0)return state;log(s,`第 ${s.round} 轮提前结算。`);finish(s);break;}
  default:return state;

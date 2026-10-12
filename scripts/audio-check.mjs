@@ -13,7 +13,7 @@ try{
    createOscillator(){const o=super.createOscillator(),start=o.start.bind(o),stop=o.stop.bind(o),setFrequency=o.frequency.setValueAtTime.bind(o.frequency);let frequency; o.frequency.setValueAtTime=(value,time)=>{frequency=value;return setFrequency(value,time);};o.start=t=>{window.audioProbe.notes.push({frequency,wave:o.type,time:t});start(t);};o.stop=t=>{window.audioProbe.lastStop=performance.now();stop(t);};return o;}
   };
  });
- await page.goto('http://localhost:5173');
+ await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
  const seed=async s=>{await page.evaluate(s=>localStorage.setItem('city-dice-v1',JSON.stringify(s)),s);await page.reload();};
  let s=initialState();s.players[0].controlled=1;await seed(s);
  assert.equal(await page.getByRole('button',{name:'关闭音效',exact:true}).isVisible(),true);

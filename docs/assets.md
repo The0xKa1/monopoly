@@ -1,7 +1,7 @@
 ---
 title: 项目资产维护
 form: reference
-updated: 2026-09-29
+updated: 2026-10-12
 status: active
 tags: [assets]
 ---
@@ -87,8 +87,17 @@ tags: [assets]
 - 测试入口复用事件像素图标；`artifacts/event-expansion-*.png` 为自选奖励、产权和护盾对比的多尺寸预览。
 
 - `artifacts/viewport-*.png`：电脑全图画布、缩放和中央决策的验证截图；本轮沿用原像素图、人物和音效，无新美术素材。
+- `artifacts/monopoly-brand-{320,390,1024,1440}.png`：小写 monopoly 品牌与手机/桌面导航的本地响应式验证截图，非正式美术素材。
+
+- `artifacts/multiplayer-desktop.png` / `multiplayer-mobile.png`：联机双浏览器桌面/手机验证截图。大厅沿用项目字体、PixelPlayer 与 CSS，没有新增第三方素材。
+
+## 2026-10-12 · 经营机制像素图标
+- `src/PixelEconomyIcon.jsx`：24×24网格原创SVG，拍卖槌、产权盾、银行、补给箱；本项目手写路径生成，React直接渲染，无外部素材或第三方许可证要求。
+- `src/economy-fx.css` / `src/FxLayer.jsx`：阶梯动画、落槌/盖章/缴费金币/补给提示；只读提交状态，减少动态时关闭。
+- `artifacts/economy-rebalance/` 保存验收截图，仅为验证产物，不作正式资产。
 
 ## 后续维护
+- `artifacts/reconnect-{320,390,1440}.png`：连接页按钮样式验收截图，沿用配色与字体，无新增外部资产。
 
 - 增删或替换素材时同步本清单及 `docs/index.md`；在 `docs/handoff.md` 记录改动和预览结果。
 - 保留来源、许可证及可复现绘制方式；生成插画时更新完整提示词记录。

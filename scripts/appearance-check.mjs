@@ -9,7 +9,7 @@ try {
  const state=()=>page.evaluate(()=>JSON.parse(localStorage.getItem('city-dice-v1')));
  const seed=async s=>{await page.evaluate(s=>localStorage.setItem('city-dice-v1',JSON.stringify(s)),s);await page.reload();};
  const source=a=>`data:image/svg+xml;charset=utf-8,${encodeURIComponent(renderAvatar(a))}`;
- await page.goto('http://localhost:5173');
+ await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
  const old=initialState();old.players.forEach(p=>delete p.appearance);old.players[0].cash=9456;old.properties={1:{owner:0,level:1}};
  await seed(old);
  assert.equal((await state()).players[0].cash,9456);assert.equal((await state()).properties[1].level,1);

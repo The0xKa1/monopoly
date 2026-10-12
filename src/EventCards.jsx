@@ -6,16 +6,16 @@ import {eventDestinations,eventChoices} from './eventOptions.js';
 import {PixelEventIcon} from './PixelEventIcon.jsx';
 import './event-cards.css';
 
-export function EventCards({game,animating,dispatch}){
+export function EventCards({game,animating,dispatch,localId=0}){
  const panel=useRef(null),focusedPhase=useRef(null);
  useEffect(()=>{
   if(!['draw','event','event-destination','event-choice'].includes(game.phase)){focusedPhase.current=null;return;}
-  if(animating||game.current!==0||focusedPhase.current===game.phase)return;
+  if(animating||game.current!==localId||focusedPhase.current===game.phase)return;
   focusedPhase.current=game.phase;
   if(game.phase!=='draw')panel.current?.querySelector('button:not(:disabled)')?.focus({preventScroll:true});
  },[game.phase,game.current,animating]);
  if(!['draw','event','event-destination','event-choice'].includes(game.phase))return null;
- const actor=game.activeEvent?.actor??game.current,player=game.players[actor],human=actor===0,disabled=animating||!human;
+ const actor=game.activeEvent?.actor??game.current,player=game.players[actor],human=actor===localId,disabled=animating||!human;
  const card=getEventCard(game.activeEvent?.id),isDraw=game.phase==='draw',tiles=getTiles(game);
  const source=game.eventDraw?.source||game.activeEvent?.source,isCityEvent=source==='city-event'||!!card?.cityId,city=card?.cityId?getCity(card.cityId):null;
  return <section ref={panel} className={`event-cards-panel ${isDraw?'is-drawing':'is-revealed'} ${isCityEvent?'city-event-cards':''}`} aria-label="特殊事件" data-event-source={isCityEvent?'city-event':source} data-event-phase={game.phase} aria-busy={animating}>

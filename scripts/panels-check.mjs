@@ -7,7 +7,7 @@ const browser=await chromium.launch({channel:'chrome',headless:true});
 try {
  const page=await browser.newPage({viewport:{width:390,height:844}}),errors=[];
  page.on('pageerror',e=>errors.push(e.message));
- await page.goto('http://localhost:5173');
+ await page.goto(`${process.env.BASE_URL||'http://localhost:5173'}/?local=1`);
  assert.equal(await page.locator('#player-details').isVisible(),false);
  assert.equal(await page.locator('#item-cards').isVisible(),false);
  assert.equal(await page.locator('.roster-strip').innerText(),'小满\n阿橙\n小紫\n蓝仔');
