@@ -2,7 +2,7 @@
 // Every action returned here must be accepted by transition(); otherwise the
 // UI would stall, so each branch re-checks the reducer's own preconditions.
 import {getTiles} from './board.js';
-import {startSupply,operatingFee,canContest,contestQuote,auctionMinimum} from './economy.js';
+import {startSupply,operatingFee,canContest,contestQuote,auctionMinimum,pendingBidders} from './economy.js';
 import {rent,upgradeCost,purchaseQuote,mortgageValue,ownedAssets,mortgaged,getIndustryQuote,canRedeem,season,owned,roundLimit} from './game.js';
 import {eventDestinations,eventChoices} from './eventOptions.js';
 import {getEventCard} from './eventCards.js';
@@ -278,10 +278,11 @@ function chooseEvent(s, id, random) {
 export function aiAction(s, random = Math.random) {
   const tiles = getTiles(s), id = s.current, p = s.players[id];
   if (s.phase === 'auction') {
-    const bidder = s.auction.bidder, tile = s.auction.tile, amount = auctionMinimum(s);
+    const bidder = s.auction.mode==='sealed'?pendingBidders(s)[0]:s.auction.bidder, tile = s.auction.tile, minimum = auctionMinimum(s);
     const strategic = completesGroup(s, tile, bidder) || blocksGroup(s, tile, bidder);
     const cap = purchaseQuote(s, tile) * (strategic ? 1.25 : 1);
-    return amount <= cap && s.players[bidder].cash - amount >= reserve(s, bidder)
+    const amount=s.auction.mode==='sealed'?Math.min(Math.floor(cap*(.7+random()*.3)),Math.floor(s.players[bidder].cash-reserve(s,bidder))):minimum;
+    return amount >= minimum && amount <= cap && s.players[bidder].cash - amount >= reserve(s, bidder)
       ? {type:'AUCTION_BID',actor:bidder,amount}
       : {type:'AUCTION_PASS',actor:bidder};
   }

@@ -9,14 +9,17 @@ test('supply decreases by round and legacy saves preserve previous income',()=>{
  const s=game();for(const [round,amount] of [[1,1200],[10,1200],[11,600],[20,600],[21,0],[100,0]]){s.round=round;assert.equal(startSupply(s,1200),amount);s.players[0].pos=19;assert.equal(transition(s,{type:'ROLL',value:1}).players[0].cash,12000+amount);}
  delete s.economyVersion;assert.equal(startSupply(s,1200),1200);assert.equal(operatingFee(s),0);
 });
-test('auction accepts public cash bids, serializes bidders, excludes passers, pays bank once',()=>{
- let s=game();s.players[0].pos=1;s=auction(s);assert.equal(s.phase,'auction');assert.equal(auctionMinimum(s),1100);
- assert.equal(transition(s,{type:'AUCTION_BID',actor:1,amount:1100}),s);
+test('sealed bids can arrive in any order, lock once, and charge only the winner after reveal',()=>{
+ let s=game();s.players[0].pos=1;s=auction(s);assert.equal(auctionMinimum(s),1100);
  assert.equal(transition(s,{type:'AUCTION_BID',actor:0,amount:13000}),s);
- s=transition(s,{type:'AUCTION_BID',actor:0,amount:1100});assert.equal(decisionPlayer(s),1);
- s=transition(s,{type:'AUCTION_PASS',actor:1});s=transition(s,{type:'AUCTION_BID',actor:2,amount:1200});
- s=transition(s,{type:'AUCTION_PASS',actor:3});assert.equal(decisionPlayer(s),0);
- s=transition(s,{type:'AUCTION_PASS',actor:0});assert.equal(s.phase,'end');assert.equal(s.properties[1].owner,2);assert.equal(s.players[2].cash,10800);assert.equal(s.current,0);
+ s=transition(s,{type:'AUCTION_BID',actor:2,amount:1800});
+ assert.equal(s.properties[1],undefined);assert.equal(s.players[2].cash,12000);
+ assert.equal(transition(s,{type:'AUCTION_PASS',actor:2}),s);
+ s=transition(s,{type:'AUCTION_BID',actor:0,amount:1200});
+ s=transition(s,{type:'AUCTION_PASS',actor:3});
+ s=transition(s,{type:'AUCTION_PASS',actor:1});
+ assert.equal(s.phase,'end');assert.equal(s.properties[1].owner,2);assert.equal(s.players[2].cash,10200);assert.equal(s.players[0].cash,12000);
+ assert.deepEqual(s.lastAuctionResult.bids.map(b=>b.amount),[1200,null,1800,null]);
  assert.equal(transition(s,{type:'AUCTION_PASS',actor:0}),s);
 });
 test('all passing leaves asset unowned; low cash arrival still permits auction',()=>{
@@ -61,4 +64,17 @@ test('settling bankruptcy and next turn fees share a balanced ledger',()=>{
  let s=game();s.round=41;s.current=0;s.phase='debt';s.debt={to:2,amount:200,label:'rent'};s.players[0].cash=50;const before=s.players.map(p=>p.cash);s=transition(s,{type:'BANKRUPT'});
  for(let id=0;id<s.players.length;id++){const delta=s.transactions.reduce((n,t)=>n+(t.to===id?t.amount:0)-(t.from===id?t.amount:0),0);assert.equal(s.players[id].cash,before[id]+delta);}
  assert.equal(s.current,1);assert.equal(s.phase,'roll');assert.equal(s.players[1].cash,11800);
+});
+test('an in-progress legacy public auction finishes under its saved rules',()=>{
+ let s=game();s.phase='auction';s.auctionQueue={tiles:[],resume:'end'};
+ s.auction={tile:1,active:[0,1,2,3],bidder:1,highestBid:1100,highestBidder:0,minimum:1100,increment:100};
+ s=JSON.parse(JSON.stringify(s));
+ for(const actor of [1,2,3])s=transition(s,{type:'AUCTION_PASS',actor});
+ assert.equal(s.phase,'end');assert.equal(s.properties[1].owner,0);assert.equal(s.players[0].cash,10900);
+});
+test('sealed validation rejects invalid amounts and unknown actors without changing state',()=>{
+ let s=game();s.players[0].pos=1;s=auction(s);
+ for(const amount of [0,-1,1000,1100.5,NaN,Infinity,'1200',13000])assert.equal(transition(s,{type:'AUCTION_BID',actor:0,amount}),s);
+ assert.equal(transition(s,{type:'AUCTION_PASS',actor:99}),s);
+ assert.equal(transition(s,{type:'AUCTION_BID',actor:0,amount:1200,auctionId:'obsolete'}),s);
 });

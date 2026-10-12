@@ -28,6 +28,7 @@ export function detectFx(prev, next) {
     }
   }
   if(next.phase==='auction'&&(prev.phase!=='auction'||prev.auction?.tile!==next.auction?.tile))fx.push({type:'auction',tile:next.auction.tile});
+  else if(next.phase==='auction'&&next.auction.mode==='sealed'&&next.auction.submitted.length>(prev.auction?.submitted?.length||0))fx.push({type:'auction-bid',tile:next.auction.tile,player:next.auction.submitted.at(-1)});
   else if(next.phase==='auction'&&next.auction.highestBid> (prev.auction?.highestBid||0))fx.push({type:'auction-bid',tile:next.auction.tile,player:next.auction.highestBidder,amount:next.auction.highestBid});
   if(next.phase==='contest'&&prev.phase!=='contest')fx.push({type:'contest',tile:next.contest.tile,player:next.contest.buyer});
   if(prev.phase==='contest'&&next.phase==='rent'&&next.pendingRent?.contested)fx.push({type:'defense',tile:prev.contest.tile,player:prev.contest.seller});

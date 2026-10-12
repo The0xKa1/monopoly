@@ -4,7 +4,7 @@ import {getTiles,getGroups,validateMap,CLASSIC_MAP,shuffleCityMap} from './board
 import {EVENT_CARDS,getEventCard,eligibleEventCards,eligibleCityEventCards} from './eventCards.js';
 import {eventDestinations,eventChoices} from './eventOptions.js';
 import {quoteIndustry} from './industries.js';
-import {ECONOMY,hasEconomy,startSupply,operatingFee,contestQuote,canContest,auctionMinimum} from './economy.js';
+import {ECONOMY,hasEconomy,startSupply,operatingFee,contestQuote,canContest,auctionMinimum,pendingBidders,canBid} from './economy.js';
 export {TILES,GROUPS} from './board.js';
 export const CARDS = {
  dice:{name:'遥控骰子',desc:'指定下一次移动步数',detail:'指定下一次骰子点数：1～6。'},
@@ -36,7 +36,7 @@ export const propertyEquity = (s,id) => holdings(s,id).reduce((sum,i)=>sum+prope
 export const worth = (s,id) => s.players[id].cash+propertyEquity(s,id)-(s.debt&&s.current===id?s.debt.amount:0);
 export const ownerName = (s,prop) => prop?.owner==='bank'?'城市银行':s.players[prop?.owner]?.name||'无';
 export const ownerColor = (s,prop) => prop?.owner==='bank'?'#98a29b':s.players[prop?.owner]?.color||'transparent';
-export const decisionPlayer = s => s.phase==='offer'?s.offer?.seller:s.phase==='auction'?s.auction?.bidder:s.phase==='contest'?s.contest?.seller:s.current;
+export const decisionPlayer = s => s.phase==='offer'?s.offer?.seller:s.phase==='auction'?(s.auction?.mode==='sealed'?pendingBidders(s)[0]:s.auction?.bidder):s.phase==='contest'?s.contest?.seller:s.current;
 export const canRedeem = (s,index,id) => s.current===id&&['roll','end'].includes(s.phase)&&s.properties[index]?.owner==='bank'&&s.properties[index]?.mortgagor===id&&s.players[id].cash>=s.properties[index].mortgageAmount;
 // Pricing stays pure so the detail panel can preview dice and visitors. Only
 // active properties count; the queried company is a hypothetical new purchase
@@ -131,8 +131,28 @@ function nextAuction(s){
  const queue=s.auctionQueue,tile=queue.tiles.shift();
  if(tile===undefined){const resume=queue.resume;delete s.auctionQueue;delete s.auction;s.phase='end';if(resume==='advance')advanceTurn(s);return;}
  const active=s.players.map((p,id)=>p.bankrupt?null:id).filter(id=>id!==null);
- s.auction={tile,active,bidder:active[0],highestBid:0,highestBidder:null,minimum:Math.ceil(getTiles(s)[tile].price*ECONOMY.auctionRate),increment:ECONOMY.auctionIncrement};
- s.phase='auction';log(s,`${getTiles(s)[tile].name}公开拍卖，起拍价 ${money(s.auction.minimum)}。`,'event');
+ s.auctionSerial=(s.auctionSerial||0)+1;
+ s.auction={id:`${s.auctionSession||'local'}:${s.auctionSerial}`,mode:'sealed',tile,active,submitted:[],bids:{},minimum:Math.ceil(getTiles(s)[tile].price*ECONOMY.auctionRate)};
+ s.phase='auction';log(s,`${getTiles(s)[tile].name}密封拍卖，底价 ${money(s.auction.minimum)}。`,'event');
+}
+function submitSealedBid(s,action){
+ const a=s.auction;
+ a.bids[action.actor]=action.type==='AUCTION_PASS'?null:action.amount;
+ a.submitted.push(action.actor);
+ if(pendingBidders(s).length)return;
+ const bids=a.active.map(player=>({player,amount:a.bids[player]}));
+ const highest=Math.max(0,...bids.map(b=>b.amount||0));
+ const tied=bids.filter(b=>b.amount===highest).map(b=>b.player);
+ const roll=Number.isFinite(action.seed)?Math.max(0,Math.min(.999999999,action.seed)):0;
+ const winner=highest?tied[Math.floor(roll*tied.length)]:null;
+ s.lastAuctionResult={id:a.id,tile:a.tile,name:getTiles(s)[a.tile].name,bids,winner,amount:highest,tied:highest?tied:[]};
+ log(s,`${getTiles(s)[a.tile].name}报价揭晓：${bids.map(b=>`${s.players[b.player].name} ${b.amount===null?'放弃':money(b.amount)}`).join('；')}。`,'event');
+ if(winner!==null){
+  transfer(s,winner,'bank',highest,`拍卖${getTiles(s)[a.tile].name}`);
+  s.properties[a.tile]={owner:winner,level:0};
+  log(s,`${tied.length>1?'最高价相同，随机抽签：':''}${s.players[winner].name}以 ${money(highest)} 拍得${getTiles(s)[a.tile].name}。`,'event');
+ }else log(s,`${getTiles(s)[a.tile].name}流拍，仍为无主资产。`,'event');
+ nextAuction(s);
 }
 function continueAuction(s,actor){
  const auction=s.auction;
@@ -246,10 +266,18 @@ export function transition(state,action){const s=structuredClone(state);const TI
  case 'BUY':{if(s.phase!=='buy'||!['city','industry'].includes(TILES[p.pos].type)||s.properties[p.pos]||p.cash<TILES[p.pos].price)return state;transfer(s,s.current,'bank',TILES[p.pos].price,`购买${TILES[p.pos].name}`);s.properties[p.pos]={owner:s.current,level:0};s.phase='end';log(s,`${p.name}购买${TILES[p.pos].name}。`);break;}
  case 'UPGRADE':{if(s.phase!=='upgrade'||TILES[p.pos].type!=='city')return state;const prop=s.properties[p.pos];if(!prop||prop.owner!==s.current||prop.level>=3)return state;const cost=upgradeCost(s,p.pos);if(p.cash<cost)return state;transfer(s,s.current,'bank',cost,`升级${TILES[p.pos].name}`);prop.upgradeSpent=upgradeSpent(s,p.pos)+cost;p.subsidy=false;prop.level++;s.phase='end';log(s,`${p.name}花费 ${money(cost)} 将${TILES[p.pos].name}升至 ${prop.level+1} 级。`);break;}
  case 'AUCTION_BID':{
+  if(s.auction?.mode==='sealed'){
+   if(!canBid(s,action.actor)||(action.auctionId!==undefined&&action.auctionId!==s.auction.id)||!Number.isSafeInteger(action.amount)||action.amount<s.auction.minimum||action.amount>s.players[action.actor].cash)return state;
+   submitSealedBid(s,action);break;
+  }
   const a=s.auction;if(s.phase!=='auction'||!a||action.actor!==a.bidder||!a.active.includes(action.actor)||s.players[action.actor].bankrupt||!Number.isSafeInteger(action.amount)||action.amount<auctionMinimum(s)||action.amount>s.players[action.actor].cash)return state;
   a.highestBid=action.amount;a.highestBidder=action.actor;log(s,`${s.players[action.actor].name}出价 ${money(action.amount)}。`,'event');continueAuction(s,action.actor);break;
  }
  case 'AUCTION_PASS':{
+  if(s.auction?.mode==='sealed'){
+   if(!canBid(s,action.actor)||(action.auctionId!==undefined&&action.auctionId!==s.auction.id))return state;
+   submitSealedBid(s,action);break;
+  }
   const a=s.auction;if(s.phase!=='auction'||!a||action.actor!==a.bidder||!a.active.includes(action.actor))return state;
   a.active=a.active.filter(id=>id!==action.actor);log(s,`${s.players[action.actor].name}退出本次拍卖。`,'event');continueAuction(s,action.actor);break;
  }

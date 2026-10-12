@@ -38,7 +38,7 @@ tags: [files]
 ## 新局经济机制
 - `src/economy.js`：补给、拍卖、产权争夺及最终经营期参数/报价。
 - `src/PixelEconomyIcon.jsx` / `src/economy-fx.css`：原创像素图标与动画；检测在 gameFx.js，展示在 FxLayer.jsx。
-- `tests/economy*.test.js`：规则、联机权限、存档及动画信号；`scripts/economy-check.mjs` / `scripts/economy-fx-check.mjs`：交互和动画验收。
+- `tests/economy*.test.js`：规则、联机权限、存档及动画信号；`scripts/economy-check.mjs` / `scripts/economy-fx-check.mjs`：交互和动画；`scripts/sealed-auction-check.mjs`：双浏览器保密报价、并发、重连与抽签验收。
 - `scripts/economy-balance.mjs`：多种子离线AI模拟；结果和截图写入 `artifacts/economy-rebalance/`，不覆盖旧公网实战。
 
 ## 应用实现

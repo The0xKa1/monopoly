@@ -15,3 +15,5 @@
 
 /* Public economy status stays compact within the board hub. */
 .hub-economy{display:flex;flex-wrap:wrap;gap:4px 12px;padding:7px 0;font-size:10px;line-height:1.5;color:#627459;border-bottom:1px solid #dbe3ce}.hub-economy span{display:flex;align-items:center;gap:4px}.hub-economy small{font-size:9px;color:#79866d}.auction-actions .property-action-title>div{min-width:0}.auction-actions h3{overflow-wrap:anywhere}
+
+.sealed-status{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:12px}.sealed-bid-label{display:grid;gap:6px;margin:12px 0;font-weight:700}.sealed-bid-label input{width:100%;min-width:0;box-sizing:border-box;padding:10px;border:2px solid #68795b;border-radius:4px;background:#fffdf2;font:inherit}.sealed-result{padding:8px;border:1px solid #c4c5a5;background:#fffbed;font-size:12px}.sealed-result summary{cursor:pointer;font-weight:700}.sealed-result>div{max-height:150px;overflow:auto}.sealed-result p{display:flex;justify-content:space-between;gap:8px;overflow-wrap:anywhere;margin:5px 0}.sealed-result b{flex-shrink:0}

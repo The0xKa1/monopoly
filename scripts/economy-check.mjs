@@ -15,15 +15,15 @@ try{
  const seed=async s=>{await page.evaluate(s=>localStorage.setItem('city-dice-v1',JSON.stringify(s)),s);await page.reload();};
  const fresh=()=>initialState(undefined,undefined,undefined,{roundLimit:null});
  let s=fresh();s.current=1;s.players[1].pos=1;s.players.slice(1).forEach(p=>p.cash=0);s.phase='buy';s=transition(s,{type:'END'});
- assert.equal(s.phase,'auction');assert.equal(s.auction.bidder,0);
- await seed(s);await page.getByRole('heading',{name:/公开拍卖/}).waitFor();
+ assert.equal(s.phase,'auction');assert.equal(s.auction.mode,'sealed');
+ await seed(s);await page.getByRole('heading',{name:/密封拍卖/}).waitFor();
  for(const width of [320,390,1440]){
   await page.setViewportSize({width,height:900});
   assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));
   await page.screenshot({path:`artifacts/economy-rebalance/auction-${width}.png`,fullPage:true});
  }
  await page.reload();assert.equal((await state()).phase,'auction');
- const bid=auctionMinimum(s);await page.getByRole('button',{name:/^出价/}).click();
+ const bid=auctionMinimum(s);await page.getByRole('button',{name:'提交保密报价'}).click();
  await page.waitForFunction(()=>JSON.parse(localStorage.getItem('city-dice-v1')).properties[1]?.owner===0);
  assert.equal((await state()).players[0].cash,12000-bid);
  // The property owner can respond while someone else is taking the turn.

@@ -89,7 +89,7 @@ function Fx({item,game,localId}){
  const players=game.players;
  if(ECONOMY_TYPES.includes(item.type)){
   const icon=item.type.startsWith('auction')?'auction':['contest','contest-sale','defense'].includes(item.type)?'contest':item.type;
-  const title={auction:'公开拍卖','auction-bid':'竞价已更新','auction-sale':'拍卖成交',contest:'产权争夺','contest-sale':'产权已转让',defense:'已保留产权',operating:'经营费已支付',supply:item.round>=21?'起点补给结束':'起点补给减半'}[item.type];
+  const title={auction:'拍卖开始','auction-bid':'报价已提交','auction-sale':'拍卖成交',contest:'产权争夺','contest-sale':'产权已转让',defense:'已保留产权',operating:'经营费已支付',supply:item.round>=21?'起点补给结束':'起点补给减半'}[item.type];
   const detail=[players[item.player]?.name,item.tileName,item.amount!==undefined?money(item.amount):null].filter(Boolean).join(' · ');
   return <div className={`fx-economy fx-economy-${item.type}`} style={{left:Math.max(160,Math.min(innerWidth-160,item.board.x+item.board.w/2)),top:Math.min(innerHeight-80,item.board.y+item.board.h*.68)}}><PixelEconomyIcon type={icon} size={40}/><span><b>{title}</b>{detail&&<small>{detail}</small>}</span></div>;
  }
