@@ -1,4 +1,5 @@
 import React,{useState,useEffect,useRef} from 'react';
+import {Github} from 'lucide-react';
 import {AppearanceEditor} from './AppearanceEditor.jsx';
 import {PixelPlayer} from './PixelPlayer.jsx';
 import {randomAppearance} from './appearance.js';
@@ -102,5 +103,5 @@ export function NetworkApp({Game}){
  <p>每次决策限时 120 秒，超时由 AI 代为操作；重连后恢复控制。所有人离线时暂停推进。房间保留至最后一次操作后 7 天。</p><p>身份保存在当前浏览器。清除浏览器数据将失去原座位；在其他设备打开邀请链接会加入新角色。</p><div className="network-buttons network-session-actions"><button className="text-button" onClick={leave}>断开连接</button><button className="text-button" onClick={net.retry}>重新连接</button></div>
  {editing&&<div className="modal-backdrop"><section className="modal appearance-modal" role="dialog" aria-modal="true" aria-label="修改昵称与外观"><AppearanceEditor player={room.seats[net.seat]} id={net.seat} onCancel={()=>setEditing(false)} onSave={(appearance,name)=>{net.send({type:'profile',appearance,name});setEditing(false);}}/></section></div>}
  </>}
- </section></div><footer className="lobby-footer"><span>像素城市 · 掷骰 / 购地 / 收租</span><span>monopoly</span></footer></div></main>;
+ </section></div><footer className="lobby-footer"><span>像素城市 · 掷骰 / 购地 / 收租</span><a className="lobby-github" href="https://github.com/The0xKa1/monopoly" target="_blank" rel="noopener noreferrer" aria-label="GitHub 项目代码（新窗口打开）"><Github size={16} aria-hidden="true"/><span>GitHub</span></a></footer></div></main>;
 }

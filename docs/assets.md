@@ -1,7 +1,7 @@
 ---
 title: 项目资产维护
 form: reference
-updated: 2026-10-12
+updated: 2026-10-20
 status: active
 tags: [assets]
 ---
@@ -10,6 +10,10 @@ tags: [assets]
 
 正式素材统一放在 `public/assets/`，浏览器通过 `/assets/` 路径访问。
 美术方向：奶油色、鼠尾草绿、暖金色与低分辨率像素地标；字体和图标与界面统一。
+
+## 2026-10-20 · GitHub 展示标题
+- `public/assets/readme/monopoly-banner.svg`：960×340，12秒CSS循环，小人行走/跳字母/掷骰/接金币，支持减少动态；README以picture嵌入，减少动态选用同目录 `monopoly-banner-still.svg` 静帧，无脚本、外链或字体依赖。
+- `node scripts/draw-readme-banner.mjs` 重建；字形、街景和动画为本项目原创，人物复用 `src/appearance.js`。仅参考 SuperNav 的 SVG 标题嵌入形式，未复制其图形或字体。无新增第三方许可证依赖；本仓库尚未声明统一开源许可证。
 
 ## 已接入背景音乐（2026-10-12）
 - 四首获用户选定：大厅《田埂午后》、准备《窗边等你》、常规《街角慢跑》、后期《夜色将至》。

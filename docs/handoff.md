@@ -1,12 +1,17 @@
 ---
 title: 最新工作交接
 form: state
-updated: 2026-10-12
+updated: 2026-10-20
 status: active
 tags: [handoff]
 ---
 
 # 工作交接
+
+## 2026-10-20 · GitHub README 展示
+- 重整 `README.md`：原创MONOPOLY动画标题、试玩入口、玩法亮点与城市预览；按 anti-defensive-writing 精简为纯项目介绍。大厅/房间页脚新增GitHub按钮（`src/NetworkApp.jsx` / `src/network.css`），新标签页打开代码仓库。新增 `scripts/draw-readme-banner.mjs` 和 `public/assets/readme/monopoly-banner.svg`，人物复用原渲染器，支持减少动态。
+- 验证：Chrome中SVG直接打开与img嵌入、动画帧变化、320px/960px布局、暗色背景和减少动态；生成可复现、README本地链接及SVG结构检查通过。
+- 应用构建通过；大厅320/390/1440布局、44px按钮、键盘焦点、新标签页目标及opener隔离检查通过，无页面JS错误。本次未运行玩法测试（未改规则）；用户已授权提交和部署，发布结果待本轮核验；原有demo/压测工作保留。
 
 ## 2026-10-12 · 密封拍卖发布
 - 按用户要求改为同时保密报价：每人一次，可放弃；全部提交后公开，最高价者按自己的报价付款，同价最高者随机抽签（用户最终确认）。底价保持原价50%，城市及共用拍卖流程的产业一致。

@@ -1,117 +1,61 @@
-# monopoly
+<div align="center">
 
-像素风中国城市大富翁，支持单机与多人联机。React + Vite，游戏规则使用独立、纯 JavaScript 状态转换，后续可以复用到微信小游戏或小程序的逻辑层；当前界面是浏览器 DOM 实现。
+<h1>
+  <picture>
+    <source media="(prefers-reduced-motion: reduce)" srcset="public/assets/readme/monopoly-banner-still.svg">
+    <img src="public/assets/readme/monopoly-banner.svg" alt="MONOPOLY — 像素城市大富翁" width="960">
+  </picture>
+</h1>
 
-仓库：[The0xKa1/monopoly](https://github.com/The0xKa1/monopoly)。
+**像素城市大富翁 · 单机与多人联机**
 
-在线试玩：[monopoly](https://monopoly.the0xka1.cc)（[备用入口](https://monopoly-the0xka1.pages.dev)）。创建房间后分享邀请链接，所有真人准备后由房主开始。
+和朋友掷骰出发，在城市之间买地、建设、收租，遇见每座城自己的故事。
 
-新局启用起点补给递减（第11轮减半、第21轮归零）、弃购/破产资产公开拍卖，以及第21轮起的产权争夺：收购价为常规报价150%，业主可向银行支付常规报价30%的防守费保留产权。第41轮起每人每轮经营费¥200，此后每轮增加¥200，现金不足进入抵押/破产流程。旧存档保留原规则，重新开局启用；规则参数见 `src/economy.js`。
+[**在线游玩**](https://monopoly.the0xka1.cc) · [备用入口](https://monopoly-the0xka1.pages.dev) · [单机模式](https://monopoly.the0xka1.cc/?local=1)
 
-## 联机开发与部署
+**88 座城市　/　2–20 个联机角色　/　118 张事件卡　/　5 类公共事业**
 
-采用 Cloudflare Pages + Pages Functions + SQLite Durable Objects。前后端均在 Cloudflare；自定义子域名通过外部 DNS CNAME 接入 Pages。
+</div>
 
-```sh
-npm ci
-npm run dev:rooms    # 终端一：房间服务 8787
-npm run dev:online   # 终端二：网页 8788
-BASE_URL=http://localhost:8788 npm run test:online
-node scripts/multiplayer-protocol-check.mjs
-npm run deploy:rooms # 先部署 DO Worker
-npm run deploy:web   # 再发布 Pages
-```
+## 像素城市，环形棋盘
 
-需要 Node.js 22+ 和已登录的 Wrangler。生产配置见两个 `wrangler.jsonc`；部署状态、DNS 与运维说明见 [交接](docs/handoff.md)。
+MONOPOLY 是一款支持桌面和手机浏览器的像素风大富翁游戏。玩家掷骰穿行于城市之间，购买地产、建设升级、收取租金，通过交易和事件积累资产。可以独自与 AI 对局，也可以邀请朋友进入同一房间。
 
-联机支持 2～20 个角色、AI、准备大厅、服务器结算、自动保存与重连。每次决策 120 秒，超时 AI 代行；所有人离线暂停，房间保留 7 天。身份绑定当前浏览器；尚无跨设备账号恢复、观战或中途加入。
+城市库收录 **58 座中国城市与 30 座世界城市**，每座城都有自己的像素地标。经典地图串联北京、西安、成都等 12 座城市；随机地图可选择中国、世界或混合范围，生成 20、28 或 36 格棋盘。
 
-## 单机启动与验证
+<p align="center">
+  <img src="public/assets/city-library/beijing.svg" alt="北京像素地标" width="140">
+  <img src="public/assets/city-library/shanghai.svg" alt="上海像素地标" width="140">
+  <img src="public/assets/city-library/chengdu.svg" alt="成都像素地标" width="140">
+  <img src="public/assets/city-library/hangzhou.svg" alt="杭州像素地标" width="140">
+</p>
 
-```sh
-npm install
-npm run dev -- --port 5173 --strictPort
-npm test
-npm run build
-node scripts/browser-check.mjs
-node scripts/motion-check.mjs
-node scripts/audio-check.mjs
-node scripts/panels-check.mjs
-node scripts/library-check.mjs
-node scripts/appearance-check.mjs
-node scripts/players-check.mjs
-node scripts/maps-check.mjs
-node scripts/hub-check.mjs
-node scripts/property-check.mjs
-node scripts/event-check.mjs
-node scripts/event-lab-check.mjs
-node scripts/event-expansion-check.mjs
-node scripts/city-events-check.mjs
-node scripts/industries-check.mjs
-node scripts/board-viewport-check.mjs
-```
+## 购买、建设与交易
 
-单机访问 `http://localhost:5173/?local=1`。浏览器检查需要本机 Google Chrome 和开发服务，可用 `BASE_URL` 切换端口。`dist/` 为前端构建；联机还需要 Pages Functions 与 DO 绑定，不能只上传静态文件。
+城市可升级至 4 级，集齐同色组会提高租金，旅行季轮换会改变热门区域。除了城市，铁路、航空、航运、太空冒险和水利电力五类产业也能购买经营，同一业主的相关产业可以产生联动收益。
 
-## 已完成
+付租前可以向业主提出收购，弃购和破产释放的资产则进入密封拍卖。现金紧张时可以抵押资产，之后按原额赎回。随着轮次推进，起点补给逐步减少，产权争夺和递增经营费让长局中的现金安排更有分量。
 
-- 经典地图 12 城：北京、西安、成都、重庆、武汉、南京、杭州、上海、广州、深圳、厦门、青岛。
-- 城市库 88 城：中国 58 城（34 个省级行政区对应城市、24 座旅游城市）与世界 30 城；新增 76 幅像素地标。
-- 图鉴按中国、世界、当前棋盘浏览，支持地区筛选与城市、地标搜索；全部城市可参与随机地图。
-- 中国、世界、混合随机地图，可选 20 / 28 / 36 格环形棋盘；默认 1 位玩家 + 3 位 AI，支持新增至总计 20 个角色；20 轮资产结算和破产提前结束。
-- 买城、收租、城市升级至 4 级；集齐当前地图同色组全部城市租金 ×1.5。
-- 棋盘顶部“事件卡测试”：逐张选择、普通/现金不足、实际变化对比、道具试用、刷新恢复与返回原对局；独立存档不覆盖本局。
-- 独立城市事件：88 城每城一张，仅本局城市入池；专属地图格到站抽卡，顶部/站点可预览卡池，测试入口分池。
-- 城市卡用城市库地标配原创故事，包含绑定本城的旅行、免费改建、抵押减免、业主活动奖励等，地图重排后仍按城市身份结算。
-- 30 张通用金色像素奇遇卡：三选一展开、翻面揭示、有趣故事与抽卡公告，包含获得道具的事件。
-- 支持生日红包、财富转移、利息、房产检修/分红、免费改建、抵押减免、全员免租、自选道具与现金奖励。
-- 地图支持洗牌/反转/轮转；旅行可选任意/未售/自有城市，巴士前往顺时针第 3 城；无目标按卡面补偿，卡库独立于地图。
-- 地图重排保留产权、抵押及城市中的人物；城市聚拢回位和传送均有动画，刷新可继续未执行的事件。
-- 4 种季节轮换，当前热门区域租金 ×1.3，可以叠加区域与角色加成。
-- 遥控骰子、租金护盾、建设补贴；道具驿站已移除，事件继续赠送道具。
-- 铁路、航空、航运、太空冒险、水利电力五类可购买产业，分别按交通网络、骰点、来客城市数、轮次和产业网络计费，同业主产业可联动加成。
-- 点击产业格查看准确公式、业主与联动，调整骰点/来客预览；到站服务费固定，不消耗护盾、不套城市加成，不能升级。
-- 产业可在付费前提出原价收购，抵押获得原价一半，原额赎回；银行代持期间不收费、不交易、不参与联动，破产后回到市场。
-- 所有玩家支持分项自定义像素外观；外观与现有能力、资产规则独立。
-- 玩家栏“新增”设置昵称和外观；新角色由 AI 控制，从起点加入。名单、昵称与外观在刷新和重开后保留。
-- 名单可横向滚动；同格超过 4 人时显示部分形象和人数，点击选择任意角色查看资产。
-- 玩家栏“外观”或资产详情“编辑外观”进入编辑器，支持随机、动作预览、保存与取消，刷新和重开保留。
-- 付租前可按地产原价 + 累计实际升级支出提出收购，业主同意免本次租金，拒绝后继续付租。
-- 现金不足可抵押，金额为地产原价的 50% + 累计实际升级支出；银行代持期间免租、不可购买，可在自己的掷骰前或回合结束时原额赎回。
-- 已无可抵押房产且仍欠款时确认破产，公告全部房产回流市场、等级归零；资产净值扣除抵押款与待付款。
-- 本地自动存档、城市图鉴、规则指南、重新开始、可开关骰子音效。
-- 桌面与移动布局，弹窗键盘焦点与 Esc 关闭。
-- 仅俯视棋盘，移除中央插画；电脑按窗口宽高完整适应、可缩放，手机大地图支持滚动与角色跟随，逐格行走、姓名标识、路线高亮与到站反馈。
-- 棋盘中央显示行动者、季节/特殊事件、最近 40 条收支公告与自己的道具；可直接用卡，公告随存档保存。
-- 现金、地产、总资产和资产账本；按实际交易播放金币流向、数值滚动与收支高亮。
-- 88 座城市地标、3 个特殊站点、5 幅产业场景及可组合外观的动态像素角色。
+## 每座城市都有故事
 
-## 文件
+**30 张通用奇遇卡与 88 张城市专属事件卡**带来旅行、红包、改建、财富转移与道具奖励。城市事件随地图组成卡池，玩家会遇见本局城市的故事。
 
-- `src/game.js`：独立规则与状态转换，无 DOM、无框架依赖；随机数由调用者提供。
-- `src/ai.js`：AI 决策（纯函数），由 game.js 转出 `aiAction`。
-- `src/board.js`：随机地图、城市 ID 组装与路径坐标，经典图保留旧存档索引。
-- `src/industries.js` / `src/IndustryDetails.jsx` / `src/industries.css`：公共事业计价、联动、详情与预览，像素画由 `scripts/draw-industries.mjs` 生成。
-- `src/BoardHub.jsx` / `src/board-hub.css`：棋盘中央状态、公告、事件、道具与回合记录。
-- `src/eventCards.js` / `src/EventCards.jsx` / `src/PixelEventIcon.jsx` / `src/event-cards.css`：事件库、金卡抽取、原创像素图标与特殊动画。
-- `src/cityEventCards.js` / `src/CityEvents.jsx`：逐城事件定义、本局卡池只读预览，独立于通用奇遇。
-- `src/PropertyActions.jsx` / `src/PropertyPortfolio.jsx` / `src/property-actions.css`：收购确认、抵押筹款、资产明细与赎回。
-- `src/MapEditor.jsx` / `src/map.css`：地图设置、随机预览与俯视地图布局。
-- `src/useGameController.js`：移动与结算动画、取消、到站提交和 AI 调度。
-- `src/audio.js`：本地合成骰子、脚步、到站和金币收支音效，支持手势解锁及静音。
-- `src/appearance.js` / `src/PixelPlayer.jsx` / `src/AppearanceEditor.jsx`：外观数据、共用角色渲染与编辑器。
-- `src/Effects.jsx` / `src/depth.css`：金币、金额滚动及角色动作样式。
-- `src/main.jsx` / `src/style.css`：界面、交互、AI 调度、本地存储。
-- `scripts/draw-assets.mjs`：调用城市生成器，并生成角色与站点 SVG。
-- `src/cityCatalog.js`：全部 88 城的唯一资料源，含地标、素材、游戏价格与分组。
-- `src/CityLibrary.jsx`：城市筛选搜索与预览；与棋盘、房产详情共享城市库。
-- `scripts/draw-city-library.mjs`：全部 88 座城市 SVG 的统一生成入口；绘图源在 `scripts/city-art/`。
-- `public/assets/city-library/`：全部城市素材；其余插画、角色及字体位于 `public/assets/` 对应目录。
-- `tests/game.test.js`：经济、卡牌、区域加成、非法操作与 50 局种子模拟。
-- `scripts/browser-check.mjs`：实际浏览器交互与移动端无溢出验证。
+遥控骰子可以选择落点，租金护盾抵挡一次城市租金，建设补贴降低升级支出。地图还可能在事件中洗牌、反转或轮转，人物与产权随城市一起移动。
 
-## 原型边界
+## 和朋友同桌
 
-当前已支持浏览器多人联机与单机，没有微信登录、排行榜、支付或小程序发布包，未提交微信审核。AI 使用纯规则策略，不调用外部模型。联机由服务端统一执行规则与随机数；单机存档仍保存在浏览器，二者互不覆盖。
+联机房间支持 **2～20 个角色，包含真人与 AI**。房主设置地图、轮数和 AI 人数，分享链接邀请朋友；所有真人准备后即可开局。对局自动保存，断线后可在原浏览器重连；决策超时由 AI 代行。
 
-资产来源及生成提示见 `public/assets/ASSETS.md`。标题字体 ZCOOL KuaiLe 使用 SIL Open Font License，许可证随字体提供。
+默认进行 20 轮，结束时按总资产结算；也可自定义轮数或选择无限轮模式，只剩一名玩家时提前结束。单机模式默认由一位玩家与三位 AI 同桌。
+
+## 自己的小人，自己的节奏
+
+角色的肤色、发型、发色、衣服、帽子、眼镜和配饰均可自由组合。像素小人在棋盘上逐格行走，购地、升级、收租和抽卡各有对应动画。
+
+大厅、准备阶段、常规对局和后期经营分别配有循环音乐。音效与背景音乐可独立调节，界面适配桌面与手机，并支持系统减少动态设置。
+
+## 开始游戏
+
+打开 [在线游戏](https://monopoly.the0xka1.cc)，输入昵称，创建房间并分享邀请链接；也可以输入朋友的房间号加入。想先熟悉玩法，可以从 [单机模式](https://monopoly.the0xka1.cc/?local=1) 开始。
+
+欢迎通过 [GitHub Issues](https://github.com/The0xKa1/monopoly/issues) 反馈问题和玩法建议。
