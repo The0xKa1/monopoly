@@ -67,3 +67,10 @@
 .network-page.lobby-motion-paused *,.network-page.lobby-motion-paused *:after,.network-page.lobby-page-hidden *,.network-page.lobby-page-hidden *:after{animation-play-state:paused!important}
 @media(max-width:760px){.lobby-walker{width:28px;height:40px}.lobby-water{bottom:78px;height:12px}.lobby-water i{width:10px;height:2px}.lobby-bird{top:65px;left:12%}.bird-two{top:79px;left:20%}.lobby-top-actions{gap:8px}.lobby-motion-toggle{font-size:10px}@keyframes lobby-stroll{0%,100%{translate:-7px 0}45%,55%{translate:7px 0}}}
 @media(prefers-reduced-motion:reduce){.network-page *,.network-page *:after{animation:none!important}.lobby-walker .walker-idle{visibility:visible}.lobby-walker .walker-step{visibility:hidden}.lobby-motion-toggle{display:none}}
+
+/* Repository entry in the shared home / room lobby footer. */
+.lobby-footer{align-items:center;flex-wrap:wrap}
+.lobby-github{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:44px;padding:0 14px;border:2px solid #718565;box-shadow:2px 2px 0 #c8ceb5;background:#f7f0dd;color:#355f4b;font:600 12px/1.2 monospace;letter-spacing:0;text-decoration:none}
+.lobby-github:hover{background:#e6edda;border-color:#355f4b}
+.lobby-github:focus-visible{outline:3px solid #355f4b;outline-offset:4px}
+.lobby-github:active{box-shadow:none;translate:2px 2px}

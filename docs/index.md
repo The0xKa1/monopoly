@@ -1,11 +1,10 @@
 ---
 title: 项目文件索引
 form: index
-updated: 2026-10-12
+updated: 2026-10-20
 status: active
 tags: [files]
 ---
-
 # 文件与目录索引
 
 以下路径相对项目根目录。
@@ -15,7 +14,7 @@ tags: [files]
 | 路径 | 作用 |
 | --- | --- |
 | [agents.md](../agents.md) | 项目协作规则；结束工作时更新 docs；单文件 150 行上限 |
-| [README.md](../README.md) | 项目说明、启动命令和原型边界 |
+| [README.md](../README.md) | GitHub 展示首页、动画标题、项目玩法与试玩入口 |
 | [docs/project.md](project.md) | 项目简介、玩法、技术方案与当前阶段 |
 | [docs/index.md](index.md) | 文件与目录用途索引，即本文件 |
 | [docs/handoff.md](handoff.md) | 最新交接、验证、待办和接手提示 |
@@ -132,6 +131,7 @@ tags: [files]
 
 | 路径 | 作用 |
 | --- | --- |
+| `public/assets/readme/monopoly-banner*.svg` / `scripts/draw-readme-banner.mjs` | GitHub 原创像素动画标题及可复现生成源 |
 | `artifacts/retired/china-pixel-world.png` | 已移除的中央插画归档，不随应用发布 |
 | `public/assets/city-library/*.svg` | 全部 88 座城市素材，统一按稳定英文 ID 命名 |
 | `public/assets/players/*.svg` | 默认外观及步行帧导出参考；应用使用 appearance.js 实时渲染 |
