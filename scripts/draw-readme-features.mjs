@@ -1,0 +1,40 @@
+// README illustrations reuse the game's original city, character and icon art.
+// Run from the repository root: node scripts/draw-readme-features.mjs
+import {readFileSync,writeFileSync,mkdirSync} from 'node:fs';
+import {build} from 'esbuild';
+import React from 'react';
+import {renderToStaticMarkup} from 'react-dom/server';
+import {defaultAppearance,renderAvatar} from '../src/appearance.js';
+import {getCity} from '../src/cityCatalog.js';
+const root=new URL('../',import.meta.url);
+mkdirSync(new URL('artifacts/readme-visuals/',root),{recursive:true});
+await build({stdin:{contents:"export {PixelEventIcon} from './src/PixelEventIcon.jsx';export {PixelEconomyIcon} from './src/PixelEconomyIcon.jsx';",resolveDir:new URL('../',import.meta.url).pathname},bundle:true,format:'esm',platform:'node',packages:'external',outfile:new URL('artifacts/readme-visuals/icons.mjs',root).pathname});
+const {PixelEventIcon,PixelEconomyIcon}=await import(new URL('artifacts/readme-visuals/icons.mjs',root));
+const esc=s=>s.replaceAll('&','&amp;').replaceAll('<','&lt;');
+const rect=(x,y,w,h,c)=>`<rect x="${x}" y="${y}" width="${w}" height="${h}" fill="${c}"/>`;
+const text=(x,y,t,size=16,c='#355f4b')=>`<text x="${x}" y="${y}" font-family="system-ui, sans-serif" font-size="${size}" font-weight="600" text-anchor="middle" fill="${c}">${esc(t)}</text>`;
+const nest=(svg,x,y,w,h)=>svg.replace(/<svg\b[^>]*>/,tag=>`<svg x="${x}" y="${y}" width="${w}" height="${h}" viewBox="${tag.match(/viewBox="([^"]+)"/)[1]}" shape-rendering="crispEdges">`);
+const city=(id,x,y,w=144,h=120)=>nest(readFileSync(new URL('public'+getCity(id).asset,root),'utf8'),x,y,w,h);
+const person=(id,x,y,changes={},scale=1)=>nest(renderAvatar({...defaultAppearance(id),...changes}),x,y,48*scale,64*scale);
+const icon=(name,x,y,size=56,economy=false)=>nest(renderToStaticMarkup(React.createElement(economy?PixelEconomyIcon:PixelEventIcon,economy?{type:name}:{name})),x,y,size,size);
+const arrow=(x,y)=>`<path d="M${x} ${y}h22v-5l9 8-9 8v-5h-22z" fill="#9cac83"/>`;
+const badge=(x,y,label,color='#63856c')=>rect(x,y,64,24,color)+text(x+32,y+17,label,12,'#fffbed');
+const check=(x,y)=>`<path d="M${x} ${y}h4v4h4v-8h4v12h-8v-4h-4z" fill="#63856c"/>`;
+const coin=(x,y)=>rect(x+3,y,14,20,'#d9b053')+rect(x,y+3,20,14,'#d9b053')+rect(x+8,y+4,4,12,'#fff0af');
+const card=(name,title,caption,art)=>{
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" width="256" height="224" viewBox="0 0 256 224" role="img" aria-labelledby="title desc"><title id="title">${esc(title)}</title><desc id="desc">${esc(caption)}。项目玩法像素示意。</desc>${rect(0,0,256,224,'#f7f0dd')}${rect(12,12,232,2,'#e3d9bc')}<g shape-rendering="crispEdges">${art}</g>${text(128,184,title,19)}${text(128,207,caption,12,'#6e7965')}</svg>\n`;
+ writeFileSync(new URL(`public/assets/readme/${name}.svg`,root),svg);
+};
+card('feature-purchase','购入城市','买地 · 收租 · 集齐同色组',city('beijing',55,27)+person(0,16,93)+coin(208,113)+badge(158,29,'已购入'));
+card('feature-upgrade','建设升级','城市最高 4 级',city('shanghai',55,34)+[0,1,2,3].map(i=>rect(61+i*34,142-i*7,26,9+i*7,['#bac9a0','#9db88b','#7d9d73','#557a5a'][i])).join('')+badge(162,27,'Lv. 4'));
+card('feature-auction','密封拍卖','秘密报价 · 最高价成交',[32,99,166].map(x=>rect(x,89,50,58,'#d8c18d')+rect(x+4,93,42,50,'#fff7df')+icon('envelope',x+7,102,36)).join('')+icon('auction',99,24,60,true));
+card('feature-chance','通用奇遇','30 张奇遇卡',[30,96,162].map((x,i)=>rect(x+3,39,62,112,'#d5c292')+rect(x,35,62,112,'#e6bc62')+rect(x+5,40,52,102,'#fff0bd')+icon(['heart','envelope','balloon'][i],x+9,66,44)).join(''));
+card('feature-city-event','城市故事','88 城 · 每城一张专属事件',rect(61,23,134,136,'#c9b580')+rect(65,27,126,128,'#fffae8')+city('chengdu',69,35,118,98)+text(128,147,'成都',14));
+card('feature-items','随身道具','遥控骰子 · 租金护盾 · 建设补贴',[['dice',23],['shield',101],['build',179]].map(([n,x])=>rect(x-5,57,68,72,'#e8dfc4')+icon(n,x,65,58)).join(''));
+card('feature-room','邀请朋友','分享房间链接，一起加入',person(0,19,68,{},1.15)+arrow(83,94)+person(1,125,66)+person(2,180,66)+icon('heart',108,24,30));
+card('feature-ready','准备开局','真人与 AI · 共 2～20 个角色',[0,1,2].map((id)=>person(id,36+id*68,61)+check(53+id*68,138)).join(''));
+card('feature-turn','轮流掷骰','选择地图与轮数，开始对局',rect(37,33,182,116,'#b4c49d')+rect(53,49,150,84,'#f7f0dd')+[0,1,2,3,4].map(i=>rect(40+i*36,36,31,10,'#e8dcba')+rect(40+i*36,136,31,10,'#e8dcba')).join('')+person(3,57,66)+icon('dice',132,69,56));
+card('feature-appearance','搭配外观','发型 · 衣服 · 帽子 · 配饰',person(0,24,50,{hat:'cap',accessory:'backpack'},1.25)+person(2,99,50,{hairColor:'violet',glasses:'round',accessory:'scarf'},1.25)+person(3,174,50,{hat:'brim',shirt:'orange'},1.25));
+card('feature-palette','自由配色','选择喜欢的肤色与服装',person(1,98,32,{skin:'brown',hairColor:'ink',shirt:'blue'},1.25)+['#528867','#d49451','#9777ad','#609ab2','#b86556','#c18d9c'].map((c,i)=>rect(34+i*32,132,24,16,c)).join(''));
+card('feature-music','声音与节奏','四首循环音乐 · 独立音量',icon('music',28,48,72)+[24,42,62,48,30,54].map((h,i)=>rect(121+i*15,133-h,9,h,['#9bb38b','#63856c','#d9b053'][i%3])).join(''));
+console.log('Generated 12 README feature illustrations.');
