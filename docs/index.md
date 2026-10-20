@@ -131,7 +131,7 @@ tags: [files]
 
 | 路径 | 作用 |
 | --- | --- |
-| `public/assets/readme/monopoly-banner*.svg` / `scripts/draw-readme-banner.mjs` | GitHub 原创像素动画标题及可复现生成源 |
+| `public/assets/readme/monopoly-banner*.svg` / `scripts/draw-readme-banner.mjs` | GitHub 原创像素动画标题及生成源；`feature-*.svg` 与 `scripts/draw-readme-features.mjs` 提供12张玩法示意 |
 | `artifacts/retired/china-pixel-world.png` | 已移除的中央插画归档，不随应用发布 |
 | `public/assets/city-library/*.svg` | 全部 88 座城市素材，统一按稳定英文 ID 命名 |
 | `public/assets/players/*.svg` | 默认外观及步行帧导出参考；应用使用 appearance.js 实时渲染 |
